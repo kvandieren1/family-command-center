@@ -81,39 +81,53 @@ export const MOCK_DATA = {
   ],
 
   // Parent-Child Task Array with nested subTasks
+  // Tasks include both old format (ownerId, cognitiveLoad, dependentId) and new format (owner, cognitiveWeight, dependent)
+  // for backwards compatibility with existing code
   tasks: [
     // Standalone ActionItems
     {
       id: 1,
       type: 'ActionItem',
       title: "Find Tax Specialist",
-      ownerId: 'user-av',
-      cognitiveLoad: 8, // Heavy (scale 1-10)
+      owner: "Amy",
+      ownerId: 'user-av', // Keep for backwards compatibility
+      ownerInitials: '[A]',
+      cognitiveWeight: 'Heavy',
+      cognitiveLoad: 8, // Keep for backwards compatibility
       cpePhase: "Planning",
       dueDate: "2026-01-15",
       status: "Not started",
+      dependent: null,
       dependentId: null
     },
     {
       id: 2,
       type: 'ActionItem',
       title: "Finalize Amy's birthday",
+      owner: "Kyle",
       ownerId: 'user-kv',
-      cognitiveLoad: 5, // Medium
+      ownerInitials: '[K]',
+      cognitiveWeight: 'Medium',
+      cognitiveLoad: 5,
       cpePhase: "Execution",
       dueDate: "2026-01-16",
       status: "Not started",
+      dependent: null,
       dependentId: null
     },
     {
       id: 3,
       type: 'ActionItem',
       title: "Transfer phone to TMOBILE",
+      owner: "Amy",
       ownerId: 'user-av',
-      cognitiveLoad: 2, // Low
+      ownerInitials: '[A]',
+      cognitiveWeight: 'Low',
+      cognitiveLoad: 2,
       cpePhase: "Execution",
       dueDate: "2026-01-16",
       status: "Not started",
+      dependent: null,
       dependentId: null
     },
     
@@ -122,46 +136,60 @@ export const MOCK_DATA = {
       id: 4,
       type: 'EVENT',
       title: "Leia's Birthday",
+      owner: "Kyle",
       ownerId: 'user-kv',
-      cognitiveLoad: 6, // Medium
+      ownerInitials: '[K]',
+      cognitiveWeight: 'Medium',
+      cognitiveLoad: 6,
       cpePhase: "Planning",
       dueDate: "2026-01-23",
       status: "Not started",
+      dependent: "Leia",
       dependentId: 'user-leia',
       subTasks: [
         {
           id: '4-1',
           title: "Book party venue",
+          owner: "Kyle",
           ownerId: 'user-kv',
           status: "Not started",
+          cognitiveWeight: 'Medium',
           cognitiveLoad: 5
         },
         {
           id: '4-2',
           title: "Order birthday cake",
+          owner: "Amy",
           ownerId: 'user-av',
           status: "Not started",
+          cognitiveWeight: 'Low',
           cognitiveLoad: 2
         },
         {
           id: '4-3',
           title: "Send invitations",
+          owner: "Amy",
           ownerId: 'user-av',
           status: "Not started",
+          cognitiveWeight: 'Low',
           cognitiveLoad: 3
         },
         {
           id: '4-4',
           title: "Buy party decorations",
+          owner: "Kyle",
           ownerId: 'user-kv',
           status: "Not started",
+          cognitiveWeight: 'Low',
           cognitiveLoad: 2
         },
         {
           id: '4-5',
           title: "Plan party activities",
+          owner: "Amy",
           ownerId: 'user-av',
           status: "Not started",
+          cognitiveWeight: 'Medium',
           cognitiveLoad: 4
         }
       ]
@@ -172,55 +200,75 @@ export const MOCK_DATA = {
       id: 5,
       type: 'ActionItem',
       title: "Open Noah's Bank Account",
+      owner: "Kyle",
       ownerId: 'user-kv',
-      cognitiveLoad: 3, // Low
+      ownerInitials: '[K]',
+      cognitiveWeight: 'Low',
+      cognitiveLoad: 3,
       cpePhase: "Execution",
       dueDate: "2026-01-30",
       status: "Not started",
+      dependent: "Noah",
       dependentId: 'user-noah'
     },
     {
       id: 6,
       type: 'ActionItem',
       title: "Family Estate Planning",
+      owner: "Kyle",
       ownerId: 'user-kv',
-      cognitiveLoad: 9, // Heavy
+      ownerInitials: '[K]',
+      cognitiveWeight: 'Heavy',
+      cognitiveLoad: 9,
       cpePhase: "Planning",
       dueDate: "2026-01-30",
       status: "Not started",
+      dependent: null,
       dependentId: null
     },
     {
       id: 7,
       type: 'ActionItem',
       title: "Debbie's Birthday Gift and Plan",
+      owner: "Kyle",
       ownerId: 'user-kv',
-      cognitiveLoad: 5, // Medium
+      ownerInitials: '[K]',
+      cognitiveWeight: 'Medium',
+      cognitiveLoad: 5,
       cpePhase: "Conception",
       dueDate: "2026-02-20",
       status: "Not started",
+      dependent: null,
       dependentId: null
     },
     {
       id: 8,
       type: 'ActionItem',
       title: "Research & Finalize Noah's School - waitlist",
+      owner: "Amy",
       ownerId: 'user-av',
-      cognitiveLoad: 8, // Heavy
+      ownerInitials: '[A]',
+      cognitiveWeight: 'Heavy',
+      cognitiveLoad: 8,
       cpePhase: "Planning",
       dueDate: "2026-02-28",
       status: "Not started",
+      dependent: "Noah",
       dependentId: 'user-noah'
     },
     {
       id: 9,
       type: 'ActionItem',
       title: "Find & secure new Au Pair",
+      owner: "Kyle",
       ownerId: 'user-kv',
-      cognitiveLoad: 7, // Heavy
+      ownerInitials: '[K]',
+      cognitiveWeight: 'Heavy',
+      cognitiveLoad: 7,
       cpePhase: "Planning",
       dueDate: "2026-04-30",
       status: "Not started",
+      dependent: null,
       dependentId: null
     }
   ],
