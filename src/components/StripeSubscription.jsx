@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { supabase } from '../lib/supabase'
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '')
@@ -98,15 +98,19 @@ function SubscriptionForm({ householdId, subscription, relationshipScore }) {
 
       const { clientSecret } = await response.json()
 
-      const { error } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: elements.getElement(CardElement),
-        }
+      // Use confirmPayment for Stripe.js v2 (replaces deprecated confirmCardPayment)
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        clientSecret,
+        confirmParams: {
+          return_url: `${window.location.origin}/subscription/success`
+        },
+        redirect: 'if_required' // Don't redirect if payment doesn't require it
       })
 
       if (error) {
         console.error('Payment error:', error)
-      } else {
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         // Subscription created successfully
         window.location.reload()
       }
@@ -140,7 +144,7 @@ function SubscriptionForm({ householdId, subscription, relationshipScore }) {
     <form onSubmit={handleSubmit} className="p-4 border border-terminal-border bg-terminal-surface">
       <h3 className="text-sm font-bold mb-2">SUBSCRIPTION</h3>
       <div className="mb-4">
-        <CardElement
+        <PaymentElement
           options={{
             style: {
               base: {
