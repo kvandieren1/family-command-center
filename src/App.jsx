@@ -253,9 +253,12 @@ function App() {
         )}
       </AnimatePresence>
       
-      {/* Build Timestamp - Visible for deployment verification */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-900/90 border-t border-slate-800/50 px-4 py-2 text-xs text-slate-400 text-center z-50">
-        Build: {import.meta.env.BUILD_TIME || 'Unknown'}
+      {/* Version Tag - Visible for deployment verification */}
+      <div id="version-tag" className="fixed bottom-0 left-0 right-0 bg-slate-900/90 border-t border-slate-800/50 px-4 py-2 text-xs text-slate-400 text-center z-50">
+        <span>v1.1.0-deploy</span>
+        {import.meta.env.BUILD_TIME && (
+          <span className="ml-2 text-slate-500">| Build: {new Date(import.meta.env.BUILD_TIME).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+        )}
       </div>
     </div>
   );

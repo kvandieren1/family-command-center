@@ -14,7 +14,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt', // Changed to prompt for better cache control
+      registerType: 'autoUpdate', // Auto-update service worker immediately
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
         name: 'Family Command Center',
@@ -48,6 +48,9 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         // Force cache invalidation on each build
         cacheId: `family-command-center-${BUILD_VERSION}`,
+        // Nuclear update: Force immediate activation and client claim
+        skipWaiting: true, // Activate new service worker immediately
+        clientsClaim: true, // Take control of all clients immediately
         // Use network-first strategy for HTML to ensure updates
         runtimeCaching: [
           {

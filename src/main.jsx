@@ -2,52 +2,39 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
+import { registerSW } from 'virtual:pwa-register'
 
-// Service Worker Update Handler
-// Reloads the page immediately when a new service worker takes control
+// PWA Service Worker Registration with immediate update
+// With autoUpdate + skipWaiting + clientsClaim, service workers activate immediately
+// No need for onNeedRefresh callback (dead code with autoUpdate)
 if ('serviceWorker' in navigator) {
-  let refreshing = false;
-  
-  // Listen for controller change (new service worker activated)
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!refreshing) {
-      refreshing = true;
-      console.log('[Service Worker] New controller detected, reloading page...');
-      window.location.reload();
-    }
-  });
-  
-  // Check for waiting service worker and prompt to update
-  navigator.serviceWorker.ready.then((registration) => {
-    if (registration.waiting) {
-      // There's a waiting service worker, send SKIP_WAITING message
-      console.log('[Service Worker] Waiting service worker found, sending SKIP_WAITING...');
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-    }
+  registerSW({
+    immediate: true, // Force immediate update check on page load
     
-    // Listen for updates
-    registration.addEventListener('updatefound', () => {
-      const newWorker = registration.installing;
-      if (newWorker) {
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // New service worker is installed and waiting
-            console.log('[Service Worker] New version available, activating...');
-            newWorker.postMessage({ type: 'SKIP_WAITING' });
-          }
-        });
-      }
-    });
+    onOfflineReady() {
+      console.log('[PWA] App ready to work offline');
+    },
+    
+    onRegistered(registration) {
+      console.log('[PWA] Service Worker registered:', registration);
+      
+      // Listen for controller change (new service worker activated)
+      // This fires when skipWaiting + clientsClaim activates a new service worker
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.log('[PWA] Service worker controller changed, reloading page...');
+        window.location.reload();
+      });
+      
+      // Periodically check for updates every 60 seconds
+      setInterval(() => {
+        registration?.update();
+      }, 60000);
+    },
+    
+    onRegisterError(error) {
+      console.error('[PWA] Service Worker registration error:', error);
+    }
   });
-  
-  // Periodically check for updates
-  setInterval(() => {
-    navigator.serviceWorker.getRegistration().then((registration) => {
-      if (registration) {
-        registration.update();
-      }
-    });
-  }, 60000); // Check every minute
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
