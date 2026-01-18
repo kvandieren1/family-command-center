@@ -138,9 +138,9 @@ export default function VoiceAI() {
       dueDate.setDate(dueDate.getDate() + daysUntil)
     }
 
-    // Determine cognitive weight
-    const heavyKeywords = ['find', 'research', 'plan', 'organize', 'coordinate']
-    const cognitiveWeight = heavyKeywords.some(k => lowerText.includes(k)) ? 'heavy' : 'medium'
+    // Determine cognitive weight using 1-3 scale (Low=1, Medium=2, High=3)
+    const highKeywords = ['find', 'research', 'plan', 'organize', 'coordinate']
+    const cognitiveWeight = highKeywords.some(k => lowerText.includes(k)) ? 'high' : 'medium'
 
     if (owner && text.length > 10) {
       await supabase

@@ -19,7 +19,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 console.log('Supabase Bridge: Connected at', supabaseUrl);
 
 export const PROFILE_TYPES = { OWNER: 'owner', STAFF: 'staff', DEPENDENT: 'dependent' };
-export const COGNITIVE_WEIGHT = { HEAVY: 'heavy', MEDIUM: 'medium', LOW: 'low' };
+export const COGNITIVE_WEIGHT = { HIGH: 'high', MEDIUM: 'medium', LOW: 'low' };
 export const TASK_STATUS = { PENDING: 'pending', IN_PROGRESS: 'in_progress', COMPLETED: 'completed', OVERDUE: 'overdue' };
 
 /**

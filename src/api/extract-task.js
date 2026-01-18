@@ -48,9 +48,9 @@ export default async function handler(req, res) {
     }
   }
 
-  // Determine cognitive weight
-  const heavyKeywords = ['find', 'research', 'plan', 'organize', 'coordinate', 'schedule']
-  const cognitiveWeight = heavyKeywords.some(k => lowerTranscript.includes(k)) ? 'heavy' : 'medium'
+  // Determine cognitive weight using 1-3 scale (Low=1, Medium=2, High=3)
+  const highKeywords = ['find', 'research', 'plan', 'organize', 'coordinate', 'schedule']
+  const cognitiveWeight = highKeywords.some(k => lowerTranscript.includes(k)) ? 'high' : 'medium'
 
   // Extract task title (first sentence or key phrase)
   const title = transcript.split(/[.!?]/)[0].trim() || transcript.substring(0, 50)

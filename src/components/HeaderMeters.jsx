@@ -122,18 +122,21 @@ function MentalLoadMeter({ householdId }) {
           return;
         }
 
-        // Calculate load: (Total Active Tasks * 10) + (Sum of task_burden scores)
-        // Since task_burden doesn't exist, we'll use cognitive_weight:
-        // heavy = 10, medium = 5, low = 2
+        // Calculate load using 1-3 scale (Low=1, Medium=2, High=3) multiplied by 10
+        // Formula: (Total Active Tasks * 10) + (Sum of cognitive_weight scores * 10)
+        // This ensures the meter stays impactful with the simpler scale
         const totalActiveTasks = tasks?.length || 0;
         const burdenScores = tasks?.reduce((sum, task) => {
-          const weight = task.cognitive_weight || 'medium';
-          if (weight === 'heavy') return sum + 10;
-          if (weight === 'medium') return sum + 5;
-          return sum + 2; // low
+          const weight = task.cognitive_weight?.toLowerCase() || 'medium';
+          // Map to 1-3 scale: Low=1, Medium=2, High=3 (handles both 'Heavy' and 'High' for backwards compatibility)
+          if (weight === 'low') return sum + 1;
+          if (weight === 'medium') return sum + 2;
+          if (weight === 'high' || weight === 'heavy') return sum + 3; // Support both 'High' and 'Heavy' for backwards compatibility
+          return sum + 2; // default to medium
         }, 0) || 0;
 
-        const calculatedLoad = (totalActiveTasks * 10) + burdenScores;
+        // Multiply by 10 to keep the meter impactful
+        const calculatedLoad = (totalActiveTasks * 10) + (burdenScores * 10);
         setLoad(calculatedLoad);
 
         // Set color based on load

@@ -500,17 +500,17 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
                     Medium
                   </button>
                   <button
-                    onClick={() => handleNeedsPlanning(COGNITIVE_WEIGHT.HEAVY)}
+                    onClick={() => handleNeedsPlanning(COGNITIVE_WEIGHT.HIGH)}
                     disabled={isStarred}
                     className={`px-4 py-3 rounded-xl border-2 font-medium transition-all ${
-                      selectedWeights[currentEvent.id] === COGNITIVE_WEIGHT.HEAVY
+                      selectedWeights[currentEvent.id] === COGNITIVE_WEIGHT.HIGH
                         ? 'bg-red-500/20 border-red-500/50 text-red-400'
                         : isStarred
                         ? 'bg-slate-800/30 border-slate-700/30 text-slate-600 cursor-not-allowed'
                         : 'bg-slate-800/50 border-slate-700/50 text-slate-300 active:bg-slate-800/70 active:border-slate-600/50'
                     }`}
                   >
-                    Heavy
+                    High
                   </button>
                 </div>
                 {isStarred && (

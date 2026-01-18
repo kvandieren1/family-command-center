@@ -5,7 +5,7 @@ export default function AddTaskModal({ onClose }) {
   const [formData, setFormData] = useState({
     title: '',
     owner: 'Amy',
-    cognitiveWeight: 'Medium',
+    cognitiveWeight: 'Medium', // Low, Medium, or High (1-3 scale)
     cpePhase: 'Planning',
     dueDate: '',
     dependent: '',
@@ -66,20 +66,46 @@ export default function AddTaskModal({ onClose }) {
                 <option value="Kyle">Kyle</option>
               </select>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Cognitive Weight
-              </label>
-              <select
-                value={formData.cognitiveWeight}
-                onChange={(e) => setFormData({ ...formData, cognitiveWeight: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded text-sm text-white focus:outline-none focus:border-blue-500/50"
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-2">
+              Cognitive Load
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, cognitiveWeight: 'Low' })}
+                className={`px-4 py-3 rounded-xl border-2 font-medium transition-all ${
+                  formData.cognitiveWeight === 'Low'
+                    ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
+                    : 'bg-slate-800/50 border-slate-700/50 text-slate-300 active:bg-slate-800/70 active:border-slate-600/50'
+                }`}
               >
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="Heavy">Heavy</option>
-              </select>
+                Low
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, cognitiveWeight: 'Medium' })}
+                className={`px-4 py-3 rounded-xl border-2 font-medium transition-all ${
+                  formData.cognitiveWeight === 'Medium'
+                    ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                    : 'bg-slate-800/50 border-slate-700/50 text-slate-300 active:bg-slate-800/70 active:border-slate-600/50'
+                }`}
+              >
+                Medium
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, cognitiveWeight: 'High' })}
+                className={`px-4 py-3 rounded-xl border-2 font-medium transition-all ${
+                  formData.cognitiveWeight === 'High'
+                    ? 'bg-red-500/20 border-red-500/50 text-red-400'
+                    : 'bg-slate-800/50 border-slate-700/50 text-slate-300 active:bg-slate-800/70 active:border-slate-600/50'
+                }`}
+              >
+                High
+              </button>
             </div>
           </div>
 
