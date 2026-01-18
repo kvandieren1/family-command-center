@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MOCK_DATA } from '../lib/mockData';
 import { getHouseholdData } from '../lib/householdStorage';
 import { supabase } from '../lib/supabase';
 import HeaderMeters from './HeaderMeters';
@@ -9,6 +8,7 @@ import CognitiveLoadChart from './CognitiveLoadChart';
 import DeliveryStats from './DeliveryStats';
 import GoalsTable from './GoalsTable';
 import TaskSummary from './TaskSummary';
+import HierarchicalTasks from './HierarchicalTasks';
 import CommandBar from './CommandBar';
 import AddTaskModal from './AddTaskModal';
 import AddGoalModal from './AddGoalModal';
@@ -91,12 +91,11 @@ export default function Dashboard() {
           if (!isMountedRef.current) return;
           
           if (profile?.household_id) {
-            // Update household with ID if we have it
-            setHousehold(prev => ({
-              ...prev,
+            // Update household with full data from database (not mock data)
+            setHousehold({
               id: profile.household_id,
               ...(profile.household || {})
-            }));
+            });
           }
         }
       } catch (err) {
@@ -304,6 +303,14 @@ export default function Dashboard() {
           {/* 6. Upcoming Tasks */}
           <div className="order-5 lg:col-span-3">
             <TaskSummary tasks={tasks} />
+          </div>
+
+          {/* 7. Hierarchical Tasks (Master Items with Nested Sub-tasks) */}
+          <div className="order-6 lg:col-span-12">
+            <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 rounded-xl p-4 sm:p-6">
+              <h2 className="text-lg font-semibold text-white mb-4">Master Schedule & Tasks</h2>
+              <HierarchicalTasks householdId={household?.id} />
+            </div>
           </div>
         </div>
       </main>

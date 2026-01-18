@@ -16,7 +16,7 @@ const COLOR_OPTIONS = [
 
 const SUPPORT_ROLES = ['Nanny', 'Grandparent', 'Au Pair', 'Babysitter'];
 
-export default function SetupWizard({ onComplete, isLoggedIn, onGoogleLoginComplete }) {
+export default function SetupWizard({ onComplete, isLoggedIn, onGoogleLoginComplete, existingHousehold }) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     familyName: '',
@@ -36,6 +36,61 @@ export default function SetupWizard({ onComplete, isLoggedIn, onGoogleLoginCompl
   const [currentSupport, setCurrentSupport] = useState({ name: '', role: '', color: COLOR_OPTIONS[0].value });
   const [currentDependent, setCurrentDependent] = useState({ name: '', type: '', color: COLOR_OPTIONS[0].value });
   const [householdNameSaved, setHouseholdNameSaved] = useState(false);
+
+  // Handle joining existing household
+  const handleJoinHousehold = async () => {
+    if (!existingHousehold?.id) return;
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        console.error('No session found for joining household');
+        return;
+      }
+
+      // Create or update user's profile to link to existing household
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .limit(1)
+        .single();
+
+      if (existingProfile) {
+        // Update existing profile to link to household
+        const { error } = await supabase
+          .from('profiles')
+          .update({ household_id: existingHousehold.id })
+          .eq('user_id', session.user.id);
+
+        if (error) {
+          console.error('Error updating profile to join household:', error);
+          return;
+        }
+      } else {
+        // Create new profile linked to household
+        const { error } = await supabase
+          .from('profiles')
+          .insert({
+            household_id: existingHousehold.id,
+            user_id: session.user.id,
+            name: session.user.email?.split('@')[0] || 'User',
+            type: 'owner',
+            created_at: new Date().toISOString()
+          });
+
+        if (error) {
+          console.error('Error creating profile to join household:', error);
+          return;
+        }
+      }
+
+      // Refresh and complete onboarding
+      window.location.reload(); // Reload to pick up new household association
+    } catch (err) {
+      console.error('Error joining household:', err);
+    }
+  };
 
   /**
    * Helper function to check if a color is available for selection
@@ -324,10 +379,13 @@ export default function SetupWizard({ onComplete, isLoggedIn, onGoogleLoginCompl
                     transition={{ delay: 0.1 }}
                   >
                     <h1 className="text-3xl sm:text-4xl font-semibold text-white mb-3">
-                      Step 1: Name Your Cockpit
+                      {existingHousehold ? 'Join Existing Household' : 'Step 1: Name Your Cockpit'}
                     </h1>
                     <p className="text-slate-400 text-sm sm:text-base">
-                      Your family's mission control. Let's get your crew synchronized.
+                      {existingHousehold 
+                        ? `You've been invited to join "${existingHousehold.name}". Click below to connect your account.`
+                        : 'Your family\'s mission control. Let\'s get your crew synchronized.'
+                      }
                     </p>
                   </motion.div>
                 </div>
@@ -338,7 +396,40 @@ export default function SetupWizard({ onComplete, isLoggedIn, onGoogleLoginCompl
                   transition={{ delay: 0.2 }}
                   className="max-w-md mx-auto"
                 >
-                  {!householdNameSaved ? (
+                  {existingHousehold ? (
+                    <>
+                      {/* Join Existing Household Option */}
+                      <button
+                        onClick={handleJoinHousehold}
+                        className="w-full px-5 py-4 bg-gradient-to-r from-teal-500 to-indigo-500 text-white font-medium rounded-xl active:from-teal-600 active:to-indigo-600 transition-all shadow-[0_0_20px_rgba(20,184,166,0.4)] mb-4"
+                      >
+                        Join {existingHousehold.name} →
+                      </button>
+                      <p className="text-xs text-slate-500 text-center mb-4">
+                        Or create a new household below
+                      </p>
+                      <div className="border-t border-slate-800/50 pt-4">
+                        <label className="block text-sm font-medium text-slate-300 mb-3">
+                          Household/Family Name <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.familyName}
+                          onChange={(e) => setFormData({ ...formData, familyName: e.target.value })}
+                          onKeyPress={(e) => e.key === 'Enter' && formData.familyName.trim() && handleSaveHouseholdName()}
+                          placeholder="e.g., New Family Name"
+                          className="w-full px-5 py-4 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/20 transition-all text-lg mb-3"
+                        />
+                        <button
+                          onClick={handleSaveHouseholdName}
+                          disabled={!formData.familyName.trim()}
+                          className="w-full px-5 py-4 bg-slate-800/50 border border-slate-700/50 text-white font-medium rounded-xl active:bg-slate-800/70 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          Create New Household
+                        </button>
+                      </div>
+                    </>
+                  ) : !householdNameSaved ? (
                     <>
                       {/* Show input field and Next button when name not saved */}
                       <label className="block text-sm font-medium text-slate-300 mb-3">

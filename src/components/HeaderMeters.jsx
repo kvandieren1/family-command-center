@@ -111,27 +111,56 @@ function MentalLoadMeter({ householdId }) {
     const calculateMentalLoad = async () => {
       try {
         // Fetch all active action_items (tasks) - pending or in_progress
-        const { data: actionItems, error: actionItemsError } = await supabase
+        const { data: actionItemsData, error: actionItemsError } = await supabase
           .from('action_items')
-          .select('burden_score, status')
+          .select('burden_score, status, assigned_to')
           .eq('household_id', householdId)
           .in('status', ['pending', 'in_progress']);
 
+        // Ensure actionItems is always an array (fallback to empty array on error or undefined)
+        let actionItems = [];
         if (actionItemsError) {
           console.error('Error fetching action_items for mental load:', actionItemsError);
-          return;
+        } else if (Array.isArray(actionItemsData)) {
+          actionItems = actionItemsData;
+        }
+
+        // Fetch master items from households table (if they have burden_score)
+        // Note: Assuming households table has been extended with burden_score and assigned_to
+        // If not, we'll also check calendar_events for master events
+        let householdsBurden = 0;
+        try {
+          const { data: householdData, error: householdError } = await supabase
+            .from('households')
+            .select('burden_score, assigned_to')
+            .eq('id', householdId)
+            .single();
+
+          if (!householdError && householdData?.burden_score) {
+            householdsBurden = householdData.burden_score || 0;
+          }
+        } catch (err) {
+          // If households table doesn't have burden_score, try calendar_events
+          const { data: eventsData, error: eventsError } = await supabase
+            .from('calendar_events')
+            .select('burden_score, assigned_to')
+            .eq('household_id', householdId);
+
+          if (!eventsError && eventsData) {
+            householdsBurden = (eventsData || []).reduce((sum, event) => {
+              return sum + (event.burden_score || 0);
+            }, 0);
+          }
         }
 
         // Sum burden_scores from action_items
         // burden_score is numeric: 1=Low, 2=Medium, 3=High
-        // Note: If master items/events from households table also have burden_score,
-        // they should be queried from their respective table, not from the households table itself
         const actionItemsBurden = (actionItems || []).reduce((sum, item) => {
           return sum + (item.burden_score || 0);
         }, 0);
 
-        // Calculate total burden (sum of all action_items burden_scores)
-        const totalBurden = actionItemsBurden;
+        // Calculate total burden (sum of households/master events + action_items)
+        const totalBurden = householdsBurden + actionItemsBurden;
         
         // Multiply by 10 to keep the meter impactful (since max is now 3 instead of 10)
         const calculatedLoad = totalBurden * 10;

@@ -211,23 +211,57 @@ function App() {
             setShowEventReviewer(true);
           }
         } else {
-          // No household found - user needs to complete onboarding
-          // Reset state to safe defaults for new onboarding session
+          // No household found - check if "Van Dieren Home" exists to join
+          await checkForExistingHousehold(user.id);
+        }
+      } else {
+        // No email - check if "Van Dieren Home" exists to join
+        if (user?.id) {
+          await checkForExistingHousehold(user.id);
+        } else {
           setOnboardingComplete(false);
           setIsPremium(false);
           setShowEventReviewer(false);
         }
+      }
+    } catch (err) {
+      console.error('Error in generic OAuth callback:', err);
+      // On error, show setup wizard to allow user to configure household
+      setOnboardingComplete(false);
+      setIsPremium(false);
+      setShowEventReviewer(false);
+    }
+  };
+
+  // Check if "Van Dieren Home" household exists and allow user to join
+  const checkForExistingHousehold = async (userId) => {
+    try {
+      // Search for "Van Dieren Home" household
+      const { data: existingHousehold } = await supabase
+        .from('households')
+        .select('*')
+        .eq('name', 'Van Dieren Home')
+        .limit(1)
+        .single();
+
+      if (existingHousehold) {
+        // Household exists - set it but keep onboarding incomplete so SetupWizard can show "Join" option
+        setHousehold(existingHousehold);
+        setOnboardingComplete(false); // Keep false so SetupWizard shows with "Join" option
+        setIsPremium(false);
+        setShowEventReviewer(false);
       } else {
-        // No email - user needs to complete onboarding
-        // Reset state to safe defaults for new onboarding session
+        // No existing household found - normal new onboarding
         setOnboardingComplete(false);
         setIsPremium(false);
         setShowEventReviewer(false);
       }
     } catch (err) {
-      console.error('Error in generic OAuth callback:', err);
-      setOnboardingComplete(true);
-      setShowEventReviewer(true);
+      console.error('Error checking for existing household:', err);
+      // On error, default to new onboarding
+      setOnboardingComplete(false);
+      setIsPremium(false);
+      setShowEventReviewer(false);
     }
   };
 
@@ -327,6 +361,7 @@ function App() {
               onComplete={handleOnboardingComplete}
               isLoggedIn={isLoggedIn}
               onGoogleLoginComplete={handleGoogleLoginComplete}
+              existingHousehold={household} // Pass household if it exists (for "Join" flow)
             />
           </motion.div>
         ) : showEventReviewer ? (

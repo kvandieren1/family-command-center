@@ -2,65 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { COGNITIVE_WEIGHT, supabase } from '../lib/supabase';
 
-// Mock events fallback - Always available for demo
-const MOCK_EVENTS = [
-  {
-    id: 1,
-    title: "Family Dinner",
-    date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }),
-    time: "6:00 PM - 8:00 PM",
-    description: "Weekly family dinner gathering",
-    startTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-    endTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 2,
-    title: "Gym Session",
-    date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }),
-    time: "6:00 AM - 7:00 AM",
-    description: "Morning workout routine",
-    startTime: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-    endTime: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 3,
-    title: "Birthday Party",
-    date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }),
-    time: "2:00 PM - 5:00 PM",
-    description: "Special birthday celebration planning",
-    startTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 4,
-    title: "School Meeting",
-    date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }),
-    time: "3:00 PM - 4:00 PM",
-    description: "Parent-teacher conference",
-    startTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-    endTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString()
-  }
-];
+// No mock data - app now uses real data from Supabase
 
 export default function EventReviewer({ onStarredCountChange, onComplete, householdId }) {
   const [events, setEvents] = useState([]);
@@ -106,22 +48,14 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
   }, []);
 
   useEffect(() => {
-    if (useMockEvents) {
-      setEvents(MOCK_EVENTS);
-      setIsLoading(false);
-    } else {
+    if (!useMockEvents) {
       fetchGoogleCalendarEvents();
+    } else {
+      // If no Google Calendar connection, show empty state
+      setEvents([]);
+      setIsLoading(false);
     }
   }, [householdId, useMockEvents]);
-
-  // CRITICAL: Ensure events are never empty - always have mock events as fallback for demo
-  useEffect(() => {
-    if (events.length === 0 && !isLoading) {
-      console.log('[EventReviewer] Events array is empty, automatically loading mock/demo events');
-      setEvents(MOCK_EVENTS);
-      setUseMockEvents(true);
-    }
-  }, [events.length, isLoading]);
 
   const fetchGoogleCalendarEvents = async () => {
     try {
@@ -134,8 +68,8 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !session) {
-        console.log('[EventReviewer] No Google session found, using mock events', sessionError);
-        setEvents(MOCK_EVENTS);
+        console.log('[EventReviewer] No Google session found', sessionError);
+        setEvents([]);
         setIsLoading(false);
         return;
       }
@@ -153,10 +87,10 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
       const providerToken = session.provider_token || session.access_token;
       
       if (!providerToken) {
-        console.log('[EventReviewer] No provider token found, falling back to mock events');
-        setEvents(MOCK_EVENTS);
+        console.log('[EventReviewer] No provider token found');
+        setEvents([]);
         setIsLoading(false);
-        setUseMockEvents(true); // Automatically switch to mock if no token
+        setUseMockEvents(true);
         return;
       }
 
@@ -227,17 +161,13 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
         console.log('[EventReviewer] Successfully transformed', transformedEvents.length, 'events');
         setEvents(transformedEvents);
       } else {
-        // No events found - CRITICAL: Always fall back to mock events for demo
-        console.log('[EventReviewer] No Google Calendar events found, automatically loading mock/demo events');
-        setEvents(MOCK_EVENTS);
-        setUseMockEvents(true); // Automatically switch to mock if no events
+        // No events found - show empty state
+        console.log('[EventReviewer] No Google Calendar events found');
+        setEvents([]);
       }
     } catch (err) {
       console.error('[EventReviewer] Error fetching Google Calendar events:', err);
-      // CRITICAL: Always fall back to mock events on error for demo
-      console.log('[EventReviewer] Error occurred, automatically loading mock/demo events for demo');
-      setEvents(MOCK_EVENTS);
-      setUseMockEvents(true); // Automatically switch to mock on error
+      setEvents([]);
     } finally {
       setIsLoading(false);
     }
