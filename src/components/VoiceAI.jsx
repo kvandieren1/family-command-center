@@ -179,7 +179,7 @@ export default function VoiceAI() {
         className={`w-16 h-16 rounded-full border-2 flex items-center justify-center ${
           isListening
             ? 'bg-terminal-error border-terminal-error animate-pulse'
-            : 'bg-terminal-surface border-terminal-accent hover:bg-terminal-bg'
+            : 'bg-terminal-surface border-terminal-accent active:bg-terminal-bg touch-none'
         }`}
         title="Voice Input"
       >

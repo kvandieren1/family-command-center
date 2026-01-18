@@ -104,7 +104,7 @@ export default function HouseholdSetup() {
             <button
               onClick={() => setStep(2)}
               disabled={!householdName}
-              className="w-full py-2 bg-terminal-accent text-terminal-bg font-bold hover:opacity-80 disabled:opacity-50"
+              className="w-full py-2 bg-terminal-accent text-terminal-bg font-bold active:opacity-80 disabled:opacity-50"
             >
               NEXT →
             </button>
@@ -134,7 +134,7 @@ export default function HouseholdSetup() {
                 {idx === owners.length - 1 && (
                   <button
                     onClick={addOwner}
-                    className="px-3 py-2 border border-terminal-border hover:bg-terminal-bg text-xs"
+                    className="px-3 py-2 border border-terminal-border active:bg-terminal-bg text-xs"
                   >
                     + ADD
                   </button>
@@ -144,7 +144,7 @@ export default function HouseholdSetup() {
             <button
               onClick={() => setStep(3)}
               disabled={owners.some(o => !o.name || !o.initials)}
-              className="w-full py-2 bg-terminal-accent text-terminal-bg font-bold hover:opacity-80 disabled:opacity-50"
+              className="w-full py-2 bg-terminal-accent text-terminal-bg font-bold active:opacity-80 disabled:opacity-50"
             >
               NEXT →
             </button>
@@ -172,7 +172,7 @@ export default function HouseholdSetup() {
                 {idx === dependents.length - 1 && (
                   <button
                     onClick={addDependent}
-                    className="px-3 py-2 border border-terminal-border hover:bg-terminal-bg text-xs"
+                    className="px-3 py-2 border border-terminal-border active:bg-terminal-bg text-xs"
                   >
                     + ADD
                   </button>
@@ -182,7 +182,7 @@ export default function HouseholdSetup() {
             <button
               onClick={handleCreateHousehold}
               disabled={loading || dependents.some(d => !d.name)}
-              className="w-full py-2 bg-terminal-accent text-terminal-bg font-bold hover:opacity-80 disabled:opacity-50"
+              className="w-full py-2 bg-terminal-accent text-terminal-bg font-bold active:opacity-80 disabled:opacity-50"
             >
               {loading ? 'CREATING...' : 'COMPLETE SETUP'}
             </button>
@@ -192,3 +192,4 @@ export default function HouseholdSetup() {
     </div>
   )
 }
+

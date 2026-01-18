@@ -25,7 +25,7 @@ export default function AddGoalModal({ onClose }) {
             <h2 className="text-lg font-semibold text-white">Add 2026 Strategic Goal</h2>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-white transition-colors"
+              className="text-slate-400 active:text-white transition-colors"
             >
               ✕
             </button>
@@ -98,13 +98,13 @@ export default function AddGoalModal({ onClose }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded text-sm font-medium text-slate-300 hover:bg-slate-800/70 transition-colors"
+              className="flex-1 px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded text-sm font-medium text-slate-300 active:bg-slate-800/70 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-500/20 border border-blue-500/40 rounded text-sm font-medium text-blue-400 hover:bg-blue-500/30 transition-colors"
+              className="flex-1 px-4 py-2 bg-blue-500/20 border border-blue-500/40 rounded text-sm font-medium text-blue-400 active:bg-blue-500/30 transition-colors"
             >
               Add Goal
             </button>
@@ -114,3 +114,4 @@ export default function AddGoalModal({ onClose }) {
     </div>
   );
 }
+

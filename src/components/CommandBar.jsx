@@ -43,7 +43,7 @@ export default function CommandBar({ onToggle, activeModal, activeView }) {
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 sm:gap-1 px-1 sm:px-2 md:px-4 min-h-[44px] text-[8px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wider transition-all border ${
                 button.active
                   ? 'bg-blue-500/20 text-blue-400 border-blue-500/40 shadow-[0_0_8px_rgba(59,130,246,0.3)]'
-                  : 'bg-slate-800/50 text-slate-400 border-slate-700/50 hover:bg-slate-800/70 hover:text-slate-300 active:bg-slate-800/80'
+                  : 'bg-slate-800/50 text-slate-400 border-slate-700/50 active:bg-slate-800/70 active:text-slate-300 touch-none'
               }`}
             >
               <span className="text-sm sm:text-base md:text-lg leading-none">{button.icon}</span>

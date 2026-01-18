@@ -67,14 +67,14 @@ export default function Auth() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-terminal-accent text-terminal-bg font-bold hover:opacity-80 disabled:opacity-50"
+            className="w-full py-2 bg-terminal-accent text-terminal-bg font-bold active:opacity-80 disabled:opacity-50 touch-none"
           >
             {loading ? 'PROCESSING...' : isSignUp ? 'SIGN UP' : 'SIGN IN'}
           </button>
         </form>
         <button
           onClick={() => setIsSignUp(!isSignUp)}
-          className="mt-4 text-sm text-terminal-text opacity-70 hover:opacity-100"
+          className="mt-4 text-sm text-terminal-text opacity-70 active:opacity-100 touch-none"
         >
           {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
         </button>

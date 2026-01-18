@@ -220,7 +220,7 @@ function SubscriptionForm({ householdId, subscription, relationshipScore }) {
       <button
         type="submit"
         disabled={!stripe || loading}
-        className="w-full px-4 py-2 bg-terminal-accent text-terminal-bg font-bold hover:opacity-80 disabled:opacity-50"
+        className="w-full px-4 py-2 bg-terminal-accent text-terminal-bg font-bold active:opacity-80 disabled:opacity-50 touch-none"
       >
         {loading ? 'PROCESSING...' : 'SUBSCRIBE'}
       </button>

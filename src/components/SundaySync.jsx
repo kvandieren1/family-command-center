@@ -44,7 +44,7 @@ export default function SundaySync() {
             className={`px-4 py-2 border ${
               mode === 'manual' 
                 ? 'bg-terminal-accent text-terminal-bg border-terminal-accent' 
-                : 'border-terminal-border hover:bg-terminal-surface'
+                : 'border-terminal-border active:bg-terminal-surface'
             }`}
           >
             MANUAL MODE
@@ -54,7 +54,7 @@ export default function SundaySync() {
             className={`px-4 py-2 border ${
               mode === 'voice' 
                 ? 'bg-terminal-accent text-terminal-bg border-terminal-accent' 
-                : 'border-terminal-border hover:bg-terminal-surface'
+                : 'border-terminal-border active:bg-terminal-surface'
             }`}
           >
             VERBAL AI MODE
@@ -91,14 +91,14 @@ export default function SundaySync() {
               <button
                 onClick={() => setStep(Math.max(1, step - 1))}
                 disabled={step === 1}
-                className="px-4 py-2 border border-terminal-border hover:bg-terminal-surface disabled:opacity-30"
+                className="px-4 py-2 border border-terminal-border active:bg-terminal-surface disabled:opacity-30"
               >
                 ← PREV
               </button>
               <button
                 onClick={() => setStep(Math.min(5, step + 1))}
                 disabled={step === 5}
-                className="px-4 py-2 border border-terminal-accent bg-terminal-accent text-terminal-bg hover:opacity-80 disabled:opacity-30"
+                className="px-4 py-2 border border-terminal-accent bg-terminal-accent text-terminal-bg active:opacity-80 disabled:opacity-30"
               >
                 {step === 5 ? 'COMPLETE' : 'NEXT →'}
               </button>
@@ -199,7 +199,7 @@ function RelationshipCheckStep({ householdId }) {
         </div>
         <button
           onClick={saveScore}
-          className="px-4 py-2 bg-terminal-accent text-terminal-bg font-bold hover:opacity-80"
+          className="px-4 py-2 bg-terminal-accent text-terminal-bg font-bold active:opacity-80"
         >
           SAVE SCORE
         </button>
@@ -222,3 +222,4 @@ function VoiceMode({ householdId }) {
     </div>
   )
 }
+

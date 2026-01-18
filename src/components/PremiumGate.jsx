@@ -289,7 +289,7 @@ export default function PremiumGate({ starredCount, onUnlock, householdId }) {
                 <button
                   type="button"
                   onClick={handleTestCardClick}
-                  className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
+                  className="mt-2 text-xs text-indigo-400 active:text-indigo-300 underline cursor-pointer touch-none"
                 >
                   Auto-fill Test Card
                 </button>
@@ -335,7 +335,7 @@ export default function PremiumGate({ starredCount, onUnlock, householdId }) {
               transition={{ delay: 0.6 }}
               onClick={handleUnlock}
               disabled={isProcessing}
-              className="w-full py-5 px-8 bg-gradient-to-r from-teal-500 to-indigo-500 text-white font-semibold text-lg rounded-xl hover:from-teal-600 hover:to-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.4)] transform hover:scale-[1.01] active:scale-[0.99]"
+              className="w-full py-5 px-8 bg-gradient-to-r from-teal-500 to-indigo-500 text-white font-semibold text-lg rounded-xl active:from-teal-600 active:to-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(20,184,166,0.3)] active:shadow-[0_0_30px_rgba(99,102,241,0.4)] transform active:scale-[0.99] touch-none"
             >
               {isProcessing ? (
                 <span className="flex items-center justify-center gap-2">

@@ -32,7 +32,7 @@ export default function GoogleCalendarSync({ householdId }) {
       <button
         onClick={handleSync}
         disabled={syncing}
-        className="px-3 py-1 text-xs border border-terminal-accent bg-terminal-accent text-terminal-bg hover:opacity-80 disabled:opacity-50"
+        className="px-3 py-1 text-xs border border-terminal-accent bg-terminal-accent text-terminal-bg active:opacity-80 disabled:opacity-50"
       >
         {syncing ? 'SYNCING...' : 'SYNC NOW'}
       </button>
@@ -44,3 +44,4 @@ export default function GoogleCalendarSync({ householdId }) {
     </div>
   )
 }
+

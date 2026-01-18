@@ -61,25 +61,25 @@ export default function MealPlanner({ householdId }) {
         <div className="flex gap-2">
           <button
             onClick={() => setWeekStart(addDays(weekStart, -7))}
-            className="px-2 py-1 text-xs border border-terminal-border hover:bg-terminal-bg"
+            className="px-2 py-1 text-xs border border-terminal-border active:bg-terminal-bg"
           >
             ← PREV
           </button>
           <button
             onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 0 }))}
-            className="px-2 py-1 text-xs border border-terminal-border hover:bg-terminal-bg"
+            className="px-2 py-1 text-xs border border-terminal-border active:bg-terminal-bg"
           >
             THIS WEEK
           </button>
           <button
             onClick={() => setWeekStart(addDays(weekStart, 7))}
-            className="px-2 py-1 text-xs border border-terminal-border hover:bg-terminal-bg"
+            className="px-2 py-1 text-xs border border-terminal-border active:bg-terminal-bg"
           >
             NEXT →
           </button>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="px-2 py-1 text-xs border border-terminal-accent bg-terminal-accent text-terminal-bg hover:opacity-80"
+            className="px-2 py-1 text-xs border border-terminal-accent bg-terminal-accent text-terminal-bg active:opacity-80"
           >
             + ADD
           </button>
@@ -134,14 +134,14 @@ export default function MealPlanner({ householdId }) {
           <div className="flex gap-2">
             <button
               type="submit"
-              className="flex-1 px-3 py-1 bg-terminal-accent text-terminal-bg text-xs font-bold hover:opacity-80"
+              className="flex-1 px-3 py-1 bg-terminal-accent text-terminal-bg text-xs font-bold active:opacity-80"
             >
               CREATE
             </button>
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="px-3 py-1 border border-terminal-border text-xs hover:bg-terminal-bg"
+              className="px-3 py-1 border border-terminal-border text-xs active:bg-terminal-bg"
             >
               CANCEL
             </button>
@@ -187,3 +187,4 @@ export default function MealPlanner({ householdId }) {
     </div>
   )
 }
+

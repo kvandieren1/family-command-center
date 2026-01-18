@@ -49,7 +49,7 @@ export default function TaskSummary({ tasks = [] }) {
           </div>
         ) : (
           upcomingTasks.map((task, index) => (
-            <div key={task.id} className="p-4 min-h-[44px] hover:bg-slate-800/20 active:bg-slate-800/30 transition-colors touch-manipulation">
+            <div key={task.id} className="p-4 min-h-[44px] active:bg-slate-800/30 transition-colors touch-manipulation">
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">

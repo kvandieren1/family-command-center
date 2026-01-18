@@ -205,7 +205,7 @@ export default function OnboardingWizard({ onComplete }) {
                     <button
                       type="button"
                       onClick={addHead}
-                      className="px-3 py-1.5 text-xs bg-slate-800/50 border border-slate-700/50 rounded text-slate-300 hover:bg-slate-800/70 transition-colors"
+                      className="px-3 py-1.5 text-xs bg-slate-800/50 border border-slate-700/50 rounded text-slate-300 active:bg-slate-800/70 transition-colors"
                     >
                       + Add Pilot
                     </button>
@@ -225,7 +225,7 @@ export default function OnboardingWizard({ onComplete }) {
                             <button
                               type="button"
                               onClick={() => removeHead(index)}
-                              className="text-xs text-red-400 hover:text-red-300"
+                              className="text-xs text-red-400 active:text-red-300"
                             >
                               Remove
                             </button>
@@ -315,7 +315,7 @@ export default function OnboardingWizard({ onComplete }) {
                     <button
                       type="button"
                       onClick={addSupport}
-                      className="px-4 py-2 bg-blue-500/20 border border-blue-500/40 rounded-lg text-blue-400 hover:bg-blue-500/30 transition-colors"
+                      className="px-4 py-2 bg-blue-500/20 border border-blue-500/40 rounded-lg text-blue-400 active:bg-blue-500/30 transition-colors"
                     >
                       Add
                     </button>
@@ -334,7 +334,7 @@ export default function OnboardingWizard({ onComplete }) {
                           <button
                             type="button"
                             onClick={() => removeSupport(index)}
-                            className="text-slate-500 hover:text-slate-300"
+                            className="text-slate-500 active:text-slate-300"
                           >
                             ×
                           </button>
@@ -364,7 +364,7 @@ export default function OnboardingWizard({ onComplete }) {
                     <button
                       type="button"
                       onClick={addDependent}
-                      className="px-4 py-2 bg-blue-500/20 border border-blue-500/40 rounded-lg text-blue-400 hover:bg-blue-500/30 transition-colors"
+                      className="px-4 py-2 bg-blue-500/20 border border-blue-500/40 rounded-lg text-blue-400 active:bg-blue-500/30 transition-colors"
                     >
                       Add
                     </button>
@@ -383,7 +383,7 @@ export default function OnboardingWizard({ onComplete }) {
                           <button
                             type="button"
                             onClick={() => removeDependent(index)}
-                            className="text-slate-500 hover:text-slate-300"
+                            className="text-slate-500 active:text-slate-300"
                           >
                             ×
                           </button>
@@ -405,7 +405,7 @@ export default function OnboardingWizard({ onComplete }) {
             className={`px-4 py-2 rounded-lg border transition-all ${
               step === 1
                 ? 'border-slate-700/30 text-slate-600 cursor-not-allowed'
-                : 'border-slate-700/50 text-slate-300 hover:bg-slate-800/50'
+                : 'border-slate-700/50 text-slate-300 active:bg-slate-800/50'
             }`}
           >
             Back
@@ -417,7 +417,7 @@ export default function OnboardingWizard({ onComplete }) {
               disabled={!canProceed()}
               className={`px-6 py-2 rounded-lg border font-medium transition-all ${
                 canProceed()
-                  ? 'bg-blue-500/20 border-blue-500/40 text-blue-400 hover:bg-blue-500/30'
+                  ? 'bg-blue-500/20 border-blue-500/40 text-blue-400 active:bg-blue-500/30'
                   : 'border-slate-700/30 text-slate-600 cursor-not-allowed'
               }`}
             >
@@ -426,7 +426,7 @@ export default function OnboardingWizard({ onComplete }) {
           ) : (
             <button
               onClick={handleComplete}
-              className="px-6 py-2 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-400 font-medium hover:bg-blue-500/30 transition-all shadow-[0_0_8px_rgba(59,130,246,0.3)]"
+              className="px-6 py-2 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-400 font-medium active:bg-blue-500/30 transition-all shadow-[0_0_8px_rgba(59,130,246,0.3)]"
             >
               Complete Setup
             </button>
@@ -436,3 +436,4 @@ export default function OnboardingWizard({ onComplete }) {
     </div>
   );
 }
+

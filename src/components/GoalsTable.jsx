@@ -66,7 +66,7 @@ export default function GoalsTable({ goals = [] }) {
               </tr>
             ) : (
               goals.map((goal, index) => (
-                <tr key={index} className="hover:bg-slate-800/30 active:bg-slate-800/40 transition-colors min-h-[44px] touch-manipulation">
+                <tr key={index} className="active:bg-slate-800/40 transition-colors min-h-[44px] touch-manipulation">
                   <td className="px-4 py-3">
                     <div className="text-xs font-medium text-white">{goal.goal}</div>
                   </td>

@@ -96,7 +96,7 @@ export default function CalendarView({ tasks = [] }) {
           {/* Mobile: Toggle for second week */}
           <button
             onClick={() => setShowWeek2(!showWeek2)}
-            className="lg:hidden px-2 py-1 text-[10px] bg-slate-800/50 border border-slate-700/50 rounded text-slate-300 hover:bg-slate-800/70"
+            className="lg:hidden px-2 py-1 text-[10px] bg-slate-800/50 border border-slate-700/50 rounded text-slate-300 active:bg-slate-800/70"
           >
             {showWeek2 ? 'Week 1' : 'Week 2'}
           </button>
@@ -134,3 +134,4 @@ export default function CalendarView({ tasks = [] }) {
     </div>
   );
 }
+

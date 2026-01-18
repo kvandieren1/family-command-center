@@ -364,7 +364,7 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
           {onComplete && (
             <button
               onClick={onComplete}
-              className="px-6 py-3 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-all"
+              className="px-6 py-3 bg-teal-500 text-white rounded-xl active:bg-teal-600 transition-all"
             >
               Continue to Dashboard
             </button>
@@ -389,7 +389,7 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 useMockEvents
                   ? 'bg-teal-500/20 text-teal-400 border border-teal-500/40'
-                  : 'text-slate-400 hover:text-slate-300'
+                  : 'text-slate-400 active:text-slate-300'
               }`}
             >
               Use Mock Events
@@ -399,7 +399,7 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 !useMockEvents
                   ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40'
-                  : 'text-slate-400 hover:text-slate-300'
+                  : 'text-slate-400 active:text-slate-300'
               }`}
             >
               Use My Calendar
@@ -464,7 +464,7 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
               {/* Just Showing Up Button */}
               <button
                 onClick={handleJustShowingUp}
-                className="w-full px-6 py-4 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-300 font-medium hover:bg-slate-800/70 hover:border-slate-600/50 transition-all text-left"
+                className="w-full px-6 py-4 bg-slate-800/50 border border-slate-700/50 rounded-xl text-slate-300 font-medium active:bg-slate-800/70 active:border-slate-600/50 transition-all text-left"
               >
                 Just Showing Up
               </button>
@@ -481,7 +481,7 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
                         ? 'bg-green-500/20 border-green-500/50 text-green-400'
                         : isStarred
                         ? 'bg-slate-800/30 border-slate-700/30 text-slate-600 cursor-not-allowed'
-                        : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 hover:border-slate-600/50'
+                        : 'bg-slate-800/50 border-slate-700/50 text-slate-300 active:bg-slate-800/70 active:border-slate-600/50'
                     }`}
                   >
                     Low
@@ -494,7 +494,7 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
                         ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400'
                         : isStarred
                         ? 'bg-slate-800/30 border-slate-700/30 text-slate-600 cursor-not-allowed'
-                        : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 hover:border-slate-600/50'
+                        : 'bg-slate-800/50 border-slate-700/50 text-slate-300 active:bg-slate-800/70 active:border-slate-600/50'
                     }`}
                   >
                     Medium
@@ -507,7 +507,7 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
                         ? 'bg-red-500/20 border-red-500/50 text-red-400'
                         : isStarred
                         ? 'bg-slate-800/30 border-slate-700/30 text-slate-600 cursor-not-allowed'
-                        : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 hover:border-slate-600/50'
+                        : 'bg-slate-800/50 border-slate-700/50 text-slate-300 active:bg-slate-800/70 active:border-slate-600/50'
                     }`}
                   >
                     Heavy
@@ -526,3 +526,4 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
     </div>
   );
 }
+

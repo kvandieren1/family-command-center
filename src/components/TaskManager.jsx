@@ -67,7 +67,7 @@ export default function TaskManager({ tasks = [] }) {
               className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
                 filter === 'all'
                   ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                  : 'bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600'
+                  : 'bg-slate-800 text-slate-400 border border-slate-700 active:border-slate-600'
               }`}
             >
               All ({tasks.length})
@@ -77,7 +77,7 @@ export default function TaskManager({ tasks = [] }) {
               className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
                 filter === 'amy'
                   ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                  : 'bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600'
+                  : 'bg-slate-800 text-slate-400 border border-slate-700 active:border-slate-600'
               }`}
             >
               Amy ({amyTasks})
@@ -87,7 +87,7 @@ export default function TaskManager({ tasks = [] }) {
               className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
                 filter === 'kyle'
                   ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                  : 'bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600'
+                  : 'bg-slate-800 text-slate-400 border border-slate-700 active:border-slate-600'
               }`}
             >
               Kyle ({kyleTasks})
@@ -115,7 +115,7 @@ export default function TaskManager({ tasks = [] }) {
           sortedTasks.map((task) => (
             <div
               key={task.id}
-              className="px-6 py-4 hover:bg-slate-800/30 transition-colors"
+              className="px-6 py-4 active:bg-slate-800/30 transition-colors"
             >
               <div className="flex items-start gap-4">
                 {/* Left: Weight Indicator */}
@@ -167,3 +167,4 @@ export default function TaskManager({ tasks = [] }) {
     </div>
   );
 }
+
