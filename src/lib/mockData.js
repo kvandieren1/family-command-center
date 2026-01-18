@@ -359,11 +359,19 @@ export const MOCK_DATA = {
   amazonOrderHistory: []
 };
 
-// Calculate days until vacation from today (January 14, 2026)
-const today = new Date('2026-01-14');
-const vacationDate = new Date(MOCK_DATA.nextVacation.date);
-const timeDiff = vacationDate.getTime() - today.getTime();
-export const daysUntilVacation = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+// Calculate days until vacation from current date (dynamic, not hardcoded)
+// This function recalculates each time it's called to always show current countdown
+export function getDaysUntilVacation() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const vacationDate = new Date(MOCK_DATA.nextVacation.date);
+  vacationDate.setHours(0, 0, 0, 0);
+  const timeDiff = vacationDate.getTime() - today.getTime();
+  return Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+}
+
+// Export a computed value for backwards compatibility (but it's now a function call)
+export const daysUntilVacation = getDaysUntilVacation();
 
 // Helper Functions - Data Access Layer
 
@@ -414,7 +422,12 @@ export const getAllSubTasks = () => {
 
 export const getTasksByOwner = (ownerId) => {
   const ownerTasks = MOCK_DATA.tasks.filter(task => task.ownerId === ownerId);
-  const subTasks = getAllSubTasks().filter(subTask => subTask.ownerId === ownerId);
+  // Safely filter subtasks - handle cases where subtasks might not have ownerId
+  const subTasks = getAllSubTasks().filter(subTask => {
+    // Support both ownerId (for backwards compatibility) and owner (string) properties
+    return subTask?.ownerId === ownerId || 
+           (subTask?.owner && getUserById(ownerId)?.name === subTask.owner);
+  });
   return { tasks: ownerTasks, subTasks };
 };
 

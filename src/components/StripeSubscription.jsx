@@ -3,7 +3,20 @@ import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { supabase } from '../lib/supabase'
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '')
+// Validate Stripe publishable key before initializing
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+if (!stripePublishableKey || stripePublishableKey.trim() === '') {
+  console.error(
+    'Stripe Publishable Key is not configured. Please set VITE_STRIPE_PUBLISHABLE_KEY in your environment variables.'
+  );
+  // Create a rejected promise to prevent silent failures
+  throw new Error(
+    'Stripe configuration error: VITE_STRIPE_PUBLISHABLE_KEY must be set in environment variables.'
+  );
+}
+
+const stripePromise = loadStripe(stripePublishableKey)
 
 export default function StripeSubscription({ householdId }) {
   const [subscription, setSubscription] = useState(null)

@@ -183,32 +183,56 @@ export default function SetupWizard({ onComplete, isLoggedIn, onGoogleLoginCompl
   };
 
   const handleComplete = async () => {
-    const householdId = '0bac63fe-1b2b-4849-8157-02612b296928'; // Van Dieren Command household ID
-    
-    // Save dependents with their types to Supabase profiles table
+    // Get household ID from user's session (if available)
+    // During onboarding, household might not exist yet, so this is optional
+    let householdId = null;
     try {
-      // Save each dependent as a profile with dependent_type
-      for (const dependent of formData.dependents) {
-        if (dependent.name && dependent.type) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              household_id: householdId,
-              name: dependent.name,
-              type: 'dependent',
-              dependent_type: dependent.type,
-              created_at: new Date().toISOString()
-            });
-
-          if (profileError) {
-            console.error('Error saving dependent to Supabase:', profileError);
-          } else {
-            console.log('Dependent saved to Supabase:', dependent.name, dependent.type);
-          }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        // Try to get household from user's profile
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('household_id')
+          .eq('user_id', session.user.id)
+          .limit(1)
+          .single();
+        
+        if (profiles?.household_id) {
+          householdId = profiles.household_id;
         }
       }
     } catch (err) {
-      console.error('Failed to save dependents:', err);
+      console.warn('Could not retrieve household ID during setup:', err);
+    }
+    
+    // Save dependents with their types to Supabase profiles table (only if household exists)
+    if (householdId) {
+      try {
+        // Save each dependent as a profile with dependent_type
+        for (const dependent of formData.dependents) {
+          if (dependent.name && dependent.type) {
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .insert({
+                household_id: householdId,
+                name: dependent.name,
+                type: 'dependent',
+                dependent_type: dependent.type,
+                created_at: new Date().toISOString()
+              });
+
+            if (profileError) {
+              console.error('Error saving dependent to Supabase:', profileError);
+            } else {
+              console.log('Dependent saved to Supabase:', dependent.name, dependent.type);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to save dependents:', err);
+      }
+    } else {
+      console.log('Household ID not available - dependents will be saved after household creation');
     }
 
     const householdData = {

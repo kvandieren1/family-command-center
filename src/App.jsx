@@ -6,7 +6,8 @@ import SetupWizard from './components/SetupWizard';
 import EventReviewer from './components/EventReviewer';
 import PremiumGate from './components/PremiumGate';
 
-const HOUSEHOLD_ID = '0bac63fe-1b2b-4849-8157-02612b296928'; // Van Dieren Command household ID
+// Household ID is now dynamically retrieved from authenticated user's household
+// No hardcoded household ID - each user accesses only their own household data
 
 function App() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
@@ -22,22 +23,35 @@ function App() {
     checkAuthStatus();
 
     // Listen for auth state changes (handles OAuth callbacks)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        // User just signed in via OAuth
-        setIsLoggedIn(true);
-        await handleOAuthCallback(session);
-      } else if (event === 'SIGNED_OUT') {
-        // User signed out
-        setIsLoggedIn(false);
-        setOnboardingComplete(false);
-        setHousehold(null);
-        setShowEventReviewer(false);
-      }
-    });
+    let subscription = null;
+    try {
+      const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          // User just signed in via OAuth
+          setIsLoggedIn(true);
+          await handleOAuthCallback(session);
+        } else if (event === 'SIGNED_OUT') {
+          // User signed out
+          setIsLoggedIn(false);
+          setOnboardingComplete(false);
+          setHousehold(null);
+          setShowEventReviewer(false);
+        }
+      });
+      subscription = data.subscription;
+    } catch (error) {
+      console.error('Error setting up auth state listener:', error);
+    }
 
     return () => {
-      subscription.unsubscribe();
+      // Safely unsubscribe only if subscription was successfully created
+      if (subscription) {
+        try {
+          subscription.unsubscribe();
+        } catch (error) {
+          console.error('Error unsubscribing from auth state:', error);
+        }
+      }
     };
   }, []);
 
@@ -127,10 +141,16 @@ function App() {
     setShowEventReviewer(false);
     
     // Also verify in Supabase (but don't wait for it)
+    // Use household from state instead of hardcoded ID
+    if (!household?.id) {
+      console.warn('Cannot verify premium status: no household ID available');
+      return;
+    }
+    
     const { data, error } = await supabase
       .from('households')
       .select('is_premium')
-      .eq('id', HOUSEHOLD_ID)
+      .eq('id', household.id)
       .single();
 
     if (error) {
@@ -142,12 +162,12 @@ function App() {
 
   // Poll for premium status changes (in case it's updated elsewhere)
   useEffect(() => {
-    if (onboardingComplete && !isPremium && showEventReviewer) {
+    if (onboardingComplete && !isPremium && showEventReviewer && household?.id) {
       const interval = setInterval(async () => {
         const { data } = await supabase
           .from('households')
           .select('is_premium')
-          .eq('id', HOUSEHOLD_ID)
+          .eq('id', household.id)
           .single();
 
         if (data?.is_premium && !isPremium) {
@@ -204,7 +224,7 @@ function App() {
             transition={{ duration: 0.3 }}
           >
             <EventReviewer 
-              householdId={HOUSEHOLD_ID}
+              householdId={household?.id}
               onStarredCountChange={handleStarredCountChange}
               onComplete={handleEventReviewerComplete}
             />
@@ -213,6 +233,7 @@ function App() {
               <PremiumGate 
                 starredCount={starredCount}
                 onUnlock={handlePremiumUnlock}
+                householdId={household?.id}
               />
             )}
           </motion.div>

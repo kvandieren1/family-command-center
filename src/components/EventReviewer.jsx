@@ -266,7 +266,12 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
 
   const handleNeedsPlanning = async (weight) => {
     const eventId = currentEvent.id;
-    const HOUSEHOLD_ID = '0bac63fe-1b2b-4849-8157-02612b296928'; // Van Dieren Command household ID
+    
+    // Use householdId from props (dynamic, not hardcoded)
+    if (!householdId) {
+      console.error('Cannot save event: no household ID provided');
+      return;
+    }
     
     // Swipe Right - Save event to Supabase
     console.log('[EventReviewer] Swipe Right - Saving event to Supabase:', {
@@ -282,7 +287,7 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
         const { data, error } = await supabase
           .from('calendar_events')
           .upsert({
-            household_id: HOUSEHOLD_ID,
+            household_id: householdId,
             google_event_id: currentEvent.googleEventId || currentEvent.id,
             title: currentEvent.title,
             description: currentEvent.description || '',

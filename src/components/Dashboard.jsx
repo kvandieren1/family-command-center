@@ -80,7 +80,7 @@ export default function Dashboard() {
 
       {/* Top Banner Ticker with Vacation Meter */}
       <div className="bg-slate-900/80 border-b border-slate-800/50">
-        <LogisticsTicker tickerData={MOCK_DATA.ticker} daysUntilVacation={daysUntilVacation} vacationName={MOCK_DATA.nextVacation.name} />
+        <LogisticsTicker tickerData={MOCK_DATA.ticker} daysUntilVacation={daysUntilVacation()} vacationName={MOCK_DATA.nextVacation.name} />
       </div>
 
       {/* Welcome Banner */}

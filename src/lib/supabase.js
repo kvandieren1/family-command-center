@@ -312,11 +312,15 @@ export async function getStarredEvents(householdId) {
 
     // Map events to our format
     const eventsWithTasks = events.map(event => {
-      // Try to find a matching task by title (fuzzy matching)
-      const linkedTask = tasks?.find(task => 
-        task.title && event.title && 
-        task.title.toLowerCase().includes(event.title.toLowerCase().substring(0, 20))
-      ) || null;
+      // Try to find a matching task by title (bidirectional fuzzy matching)
+      // Check if either title contains the other (handles both short and long titles)
+      const linkedTask = tasks?.find(task => {
+        if (!task.title || !event.title) return false;
+        const taskTitleLower = task.title.toLowerCase();
+        const eventTitleLower = event.title.toLowerCase();
+        // Check if either title contains the other (bidirectional matching)
+        return taskTitleLower.includes(eventTitleLower) || eventTitleLower.includes(taskTitleLower);
+      }) || null;
       
       return {
         event: {

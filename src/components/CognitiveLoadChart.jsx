@@ -2,16 +2,25 @@ import React from 'react';
 import { MOCK_DATA } from '../lib/mockData';
 
 export default function CognitiveLoadChart() {
-  // 1. Define the two-week windows (starting from Jan 14, 2026)
+  // Use current date instead of hardcoded date for dynamic week calculation
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Normalize to start of day
+  
+  // Calculate start of current week (Sunday)
+  const currentWeekStart = new Date(today);
+  const dayOfWeek = currentWeekStart.getDay();
+  currentWeekStart.setDate(currentWeekStart.getDate() - dayOfWeek);
+  
+  // Define the two-week windows (current week and next week)
   const week1Days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date('2026-01-14');
+    const d = new Date(currentWeekStart);
     d.setDate(d.getDate() + i);
     return d.toISOString().split('T')[0];
   });
 
   const week2Days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date('2026-01-21');
-    d.setDate(d.getDate() + i);
+    const d = new Date(currentWeekStart);
+    d.setDate(d.getDate() + 7 + i); // Next week
     return d.toISOString().split('T')[0];
   });
 

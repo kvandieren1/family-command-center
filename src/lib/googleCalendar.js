@@ -60,11 +60,19 @@ function extractDependentFromEvent(event) {
 
 export async function requestGoogleCalendarAccess() {
   // OAuth2 flow for Google Calendar
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-  const redirectUri = `${window.location.origin}/auth/google/callback`
-  const scope = 'https://www.googleapis.com/auth/calendar.readonly'
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`
+  // Validate that Google Client ID is configured
+  if (!clientId || clientId.trim() === '') {
+    throw new Error(
+      'Google Client ID is not configured. Please set VITE_GOOGLE_CLIENT_ID in your environment variables.'
+    );
+  }
   
-  window.location.href = authUrl
+  const redirectUri = `${window.location.origin}/auth/google/callback`;
+  const scope = 'https://www.googleapis.com/auth/calendar.readonly';
+  
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent`;
+  
+  window.location.href = authUrl;
 }

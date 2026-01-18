@@ -3,9 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import confetti from 'canvas-confetti';
 
-const HOUSEHOLD_ID = '0bac63fe-1b2b-4849-8157-02612b296928'; // Van Dieren Command household ID
-
-export default function PremiumGate({ starredCount, onUnlock }) {
+export default function PremiumGate({ starredCount, onUnlock, householdId }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardNumber, setCardNumber] = useState('');
@@ -19,11 +17,16 @@ export default function PremiumGate({ starredCount, onUnlock }) {
   }, [starredCount]);
 
   const checkPremiumStatus = async () => {
+    if (!householdId) {
+      console.warn('Cannot check premium status: no household ID provided');
+      return;
+    }
+    
     try {
       const { data, error } = await supabase
         .from('households')
         .select('is_premium')
-        .eq('id', HOUSEHOLD_ID)
+        .eq('id', householdId)
         .single();
 
       if (error) {
@@ -99,10 +102,10 @@ export default function PremiumGate({ starredCount, onUnlock }) {
           premium_activated_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
-        .eq('id', HOUSEHOLD_ID)
+        .eq('id', householdId)
         .select();
 
-      console.log('Premium update result:', { data, error, householdId: HOUSEHOLD_ID });
+      console.log('Premium update result:', { data, error, householdId });
 
       if (error) {
         console.error('Error unlocking premium:', error);

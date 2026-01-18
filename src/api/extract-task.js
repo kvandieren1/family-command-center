@@ -72,5 +72,13 @@ function getDaysUntil(targetDay) {
   const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
   const today = new Date().getDay()
   const target = days.indexOf(targetDay.toLowerCase())
-  return target >= today ? target - today : 7 - today + target
+  
+  // If target day is today, return 7 (next week) instead of 0
+  // This prevents scheduling tasks for "today" when user means "next [day]"
+  if (target === today) {
+    return 7;
+  }
+  
+  // Otherwise calculate days until target day (this week or next week)
+  return target > today ? target - today : 7 - today + target
 }
