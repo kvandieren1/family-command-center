@@ -143,15 +143,23 @@ export default function VoiceAI() {
     const cognitiveWeight = highKeywords.some(k => lowerText.includes(k)) ? 'high' : 'medium'
 
     if (owner && text.length > 10) {
+      // Map cognitive_weight to burden_score (1-3 scale)
+      const burdenScoreMap = { 'high': 3, 'medium': 2, 'low': 1 };
+      const burdenScore = burdenScoreMap[cognitiveWeight] || 2; // Default to Medium
+      
+      // Map owner to assigned_to (Pilot/Co-Pilot)
+      // This is a simple mapping - in production, you'd check owner's role
+      const assignedTo = owner.name.toLowerCase().includes('amy') ? 'Pilot' : 'Co-Pilot';
+      
       await supabase
         .from('action_items')
         .insert({
           household_id: householdId,
-          owner_id: owner.id,
-          dependent_id: dependent?.id,
+          assigned_to: assignedTo,
           title: text.substring(0, 100),
           due_date: dueDate ? dueDate.toISOString().split('T')[0] : null,
-          cognitive_weight: cognitiveWeight
+          burden_score: burdenScore,
+          status: 'pending'
         })
     }
   }

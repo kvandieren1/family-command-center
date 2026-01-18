@@ -64,11 +64,22 @@ function App() {
       if (session) {
         setIsLoggedIn(true);
         // Check if user has household_id in profile
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('household_id')
-          .eq('user_id', session.user.id)
-          .single();
+        let profile = null;
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('household_id')
+            .eq('user_id', session.user.id)
+            .single();
+          
+          if (error && error.code !== 'PGRST116') {
+            console.error('Error fetching profile:', error);
+          } else if (!error) {
+            profile = data;
+          }
+        } catch (err) {
+          console.error('Error in profile query:', err);
+        }
 
         // PRODUCTION HOUSEHOLD GUARD: If logged in but no household_id, force onboarding
         if (!profile?.household_id) {
