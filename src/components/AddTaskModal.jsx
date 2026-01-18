@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { MOCK_DATA } from '../lib/mockData';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 export default function AddTaskModal({ onClose }) {
   const [formData, setFormData] = useState({
@@ -11,6 +11,46 @@ export default function AddTaskModal({ onClose }) {
     dependent: '',
     status: 'Not started',
   });
+  const [dependents, setDependents] = useState([]);
+  const [householdId, setHouseholdId] = useState(null);
+
+  // Fetch dependents from profiles table
+  useEffect(() => {
+    const fetchDependents = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return;
+
+        // Get household ID from user's profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('household_id')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (profile?.household_id) {
+          setHouseholdId(profile.household_id);
+
+          // Fetch dependents from profiles table
+          const { data: dependentsData, error } = await supabase
+            .from('profiles')
+            .select('name, type')
+            .eq('household_id', profile.household_id)
+            .eq('type', 'dependent');
+
+          if (error) {
+            console.error('Error fetching dependents:', error);
+          } else {
+            setDependents(dependentsData || []);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching dependents:', err);
+      }
+    };
+
+    fetchDependents();
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -148,9 +188,13 @@ export default function AddTaskModal({ onClose }) {
               className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded text-sm text-white focus:outline-none focus:border-blue-500/50"
             >
               <option value="">None</option>
-              {MOCK_DATA.household.dependents.map(dep => (
-                <option key={dep} value={dep}>{dep}</option>
-              ))}
+              {dependents.length > 0 ? (
+                dependents.map(dep => (
+                  <option key={dep.name} value={dep.name}>{dep.name}</option>
+                ))
+              ) : (
+                <option disabled>No dependents found</option>
+              )}
             </select>
           </div>
 

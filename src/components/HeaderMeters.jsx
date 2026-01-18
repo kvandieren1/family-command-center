@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { daysUntilVacation } from '../lib/mockData';
-import { MOCK_DATA } from '../lib/mockData';
 
 // Vacation Meter Component
 function VacationMeter({ daysUntilVacation, vacationName }) {
+  // Show empty state if no vacation data
+  if (daysUntilVacation === null || !vacationName) {
+    return (
+      <div className="relative p-4 bg-slate-900/40 backdrop-blur-md border border-slate-700/30 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+        <div className="flex flex-col items-center gap-2">
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Vacation</div>
+          <div className="text-sm text-slate-500 text-center">No vacation planned</div>
+          <button className="text-xs text-teal-400 active:text-teal-300 mt-1">+ Add</button>
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent rounded-xl pointer-events-none"></div>
+      </div>
+    );
+  }
+  
   return (
     <div className="relative p-4 bg-slate-900/40 backdrop-blur-md border border-slate-700/30 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.1)]">
       <div className="flex flex-col items-center gap-2">
@@ -262,8 +274,8 @@ export default function HeaderMeters({ householdId }) {
       <div className="max-w-[1800px] mx-auto">
         <div className="grid grid-cols-3 gap-3">
           <VacationMeter 
-            daysUntilVacation={daysUntilVacation()} 
-            vacationName={MOCK_DATA.nextVacation.name} 
+            daysUntilVacation={null} 
+            vacationName="" 
           />
           <DateNightMeter householdId={householdId} />
           <MentalLoadMeter householdId={householdId} />
