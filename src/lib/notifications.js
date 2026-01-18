@@ -4,9 +4,32 @@ let registration = null
 export async function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     try {
-      registration = await navigator.serviceWorker.register('/sw.js')
-      console.log('Service Worker registered')
-      return registration
+      // VitePWA plugin generates its own service worker, but we also have a custom one
+      // Try VitePWA's service worker first, fallback to custom
+      let reg = null;
+      try {
+        // VitePWA service worker is typically at root or generated path
+        reg = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+      } catch (e) {
+        // If VitePWA service worker not found, try custom one
+        reg = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+      }
+      
+      registration = reg;
+      console.log('Service Worker registered', registration.scope);
+      
+      // Listen for updates and force reload
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated') {
+            console.log('New service worker activated - reloading page');
+            window.location.reload();
+          }
+        });
+      });
+      
+      return registration;
     } catch (error) {
       console.error('Service Worker registration failed:', error)
     }
