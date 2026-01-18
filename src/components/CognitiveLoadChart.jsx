@@ -50,50 +50,52 @@ export default function CognitiveLoadChart() {
   const w2 = calculateWeekStats(week2Days);
 
   const WeeklyBar = ({ stats, label }) => (
-    <div className="flex-1 flex flex-col items-center h-full group px-4">
-      <div className="relative w-full h-[180px] bg-zinc-900/30 rounded-sm overflow-hidden flex flex-col-reverse border border-zinc-800">
+    <div className="flex-1 flex flex-col items-center h-full group px-2 sm:px-4">
+      <div className="relative w-full h-[180px] sm:h-[200px] bg-slate-800/40 rounded-lg overflow-hidden flex flex-col-reverse border border-slate-700/50 shadow-inner">
         {stats.total > 0 ? (
           <>
-            {/* Amy's Segment (Teal) - bottom */}
+            {/* Pilot 1 Segment (Teal) - bottom */}
             <div 
-              className="w-full bg-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.4)] transition-all duration-700" 
+              className="w-full bg-gradient-to-t from-teal-500 to-teal-400 shadow-[0_0_15px_rgba(20,184,166,0.5)] transition-all duration-700 hover:shadow-[0_0_20px_rgba(20,184,166,0.7)]" 
               style={{ height: `${stats.amyPct}%` }}
-              title={`Amy: ${stats.amyCount} tasks (${stats.amyPct.toFixed(1)}%)`}
+              title={`Pilot 1: ${stats.amyCount} tasks (${stats.amyPct.toFixed(1)}%)`}
             />
-            {/* Kyle's Segment (Indigo) - top */}
+            {/* Co-Pilot Segment (Indigo) - top */}
             <div 
-              className="w-full bg-indigo-600 shadow-[0_0_15px_rgba(79,70,229,0.4)] transition-all duration-700" 
+              className="w-full bg-gradient-to-t from-indigo-500 to-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all duration-700 hover:shadow-[0_0_20px_rgba(99,102,241,0.7)]" 
               style={{ height: `${stats.kylePct}%` }}
-              title={`Kyle: ${stats.kyleCount} tasks (${stats.kylePct.toFixed(1)}%)`}
+              title={`Co-Pilot: ${stats.kyleCount} tasks (${stats.kylePct.toFixed(1)}%)`}
             />
           </>
         ) : (
-          <div className="flex items-center justify-center h-full text-[8px] text-zinc-800 uppercase italic">No Data</div>
+          <div className="flex items-center justify-center h-full text-[8px] text-slate-600 uppercase italic">No Data</div>
         )}
       </div>
-      <span className="text-[10px] font-bold text-zinc-500 mt-3 tracking-tighter uppercase">{label}</span>
-      <span className="text-[8px] text-zinc-700 uppercase mt-1">{stats.total} Total Tasks</span>
+      <span className="text-[10px] sm:text-xs font-bold text-slate-400 mt-3 tracking-tighter uppercase">{label}</span>
+      <span className="text-[8px] text-slate-600 uppercase mt-1">{stats.total} Tasks</span>
     </div>
   );
 
   return (
-    <div className="border border-zinc-800 bg-zinc-950/50 p-4 font-mono h-full flex flex-col">
+    <div className="border border-slate-700/50 bg-slate-900/40 backdrop-blur-md rounded-xl shadow-lg p-4 sm:p-6 font-mono h-full flex flex-col">
       <div className="mb-6">
-        <h2 className="text-xs text-zinc-400 font-bold uppercase tracking-widest underline">Weekly_Balance_Report</h2>
-        <p className="text-[9px] text-zinc-600 mt-1">100% Stacked Proportion: Amy vs Kyle</p>
+        <h2 className="text-xs sm:text-sm text-slate-300 font-bold uppercase tracking-widest">Weekly Balance</h2>
+        <p className="text-[9px] text-slate-500 mt-1">Pilot vs Co-Pilot Distribution</p>
       </div>
       
-      <div className="flex-1 flex items-end justify-around gap-4 pb-4">
+      <div className="flex-1 flex items-end justify-around gap-3 sm:gap-4 pb-4">
         <WeeklyBar stats={w1} label="CURRENT_WEEK" />
         <WeeklyBar stats={w2} label="NEXT_WEEK" />
       </div>
 
-      <div className="mt-4 pt-4 border-t border-zinc-900 flex justify-center gap-6 text-[10px]">
+      <div className="mt-4 pt-4 border-t border-slate-800/50 flex justify-center gap-6 text-[10px] sm:text-xs">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-teal-500 rounded-full" /> <span className="text-zinc-400">AMY</span>
+          <div className="w-3 h-3 bg-teal-500 rounded-full shadow-[0_0_8px_rgba(20,184,166,0.4)]" /> 
+          <span className="text-slate-400 font-semibold">PILOT 1</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-indigo-600 rounded-full" /> <span className="text-zinc-400">KYLE</span>
+          <div className="w-3 h-3 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.4)]" /> 
+          <span className="text-slate-400 font-semibold">CO-PILOT</span>
         </div>
       </div>
     </div>

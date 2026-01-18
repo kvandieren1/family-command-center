@@ -191,9 +191,9 @@ export default function Dashboard() {
 
       {/* Main Content - Mobile-First Vertical Stack */}
       <main className="max-w-[1800px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 sm:gap-6">
           {/* 1. Weekly Summary - Top 50% of mobile viewport */}
-          <div className="order-1 lg:col-span-12 mb-4">
+          <div className="order-1 lg:col-span-12 mb-2 sm:mb-4">
             <WeeklySummary householdId={household?.id} household={household} />
           </div>
 

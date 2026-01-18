@@ -25,7 +25,7 @@ export default function WeeklySummary({ householdId, household }) {
         const nextWeek = new Date(today);
         nextWeek.setDate(nextWeek.getDate() + 7);
 
-        // Fetch events in next 7 days
+        // Fetch events from calendar_events table for next 7 days
         const { data: events, error: eventsError } = await supabase
           .from('calendar_events')
           .select('*')
@@ -40,81 +40,63 @@ export default function WeeklySummary({ householdId, household }) {
           setEventCount(events?.length || 0);
         }
 
-        // Fetch tasks with due_date in next 7 days
-        const { data: tasks, error: tasksError } = await supabase
-          .from('tasks')
+        // Fetch action_items (tasks) with due_date in next 7 days
+        const { data: actionItems, error: actionItemsError } = await supabase
+          .from('action_items')
           .select('*')
           .eq('household_id', householdId)
           .gte('due_date', today.toISOString().split('T')[0])
           .lt('due_date', nextWeek.toISOString().split('T')[0])
           .in('status', ['pending', 'in_progress']);
 
-        if (tasksError) {
-          console.error('Error fetching weekly tasks:', tasksError);
-        } else {
-          const totalTasks = tasks?.length || 0;
-          setTaskCount(totalTasks);
+        if (actionItemsError) {
+          console.error('Error fetching weekly action_items:', actionItemsError);
+        }
 
-          // Get pilot names from household
-          const pilots = household?.heads || [];
-          const pilot1Name = pilots[0] ? (typeof pilots[0] === 'string' ? pilots[0] : pilots[0].name) : null;
-          const pilot2Name = pilots[1] ? (typeof pilots[1] === 'string' ? pilots[1] : pilots[1].name) : null;
+        // Count total tasks from action_items only (for now)
+        // If master items/events from households table need to be included, add them here
+        const totalActionItems = actionItems?.length || 0;
+        const totalTasks = totalActionItems;
 
-          if (totalTasks > 0 && pilot1Name && pilot2Name) {
-            // Count tasks per pilot
-            // First, get all profiles for this household to map IDs to names
-            const { data: profiles } = await supabase
-              .from('profiles')
-              .select('id, name, type')
-              .eq('household_id', householdId)
-              .in('type', ['owner']);
+        setTaskCount(totalTasks);
 
-            // Create a map of profile ID to name
-            const profileMap = {};
-            profiles?.forEach(profile => {
-              profileMap[profile.id] = profile.name;
-            });
+        // Get pilot names from household
+        const pilots = household?.heads || [];
+        const pilot1Name = pilots[0] ? (typeof pilots[0] === 'string' ? pilots[0] : pilots[0].name) : null;
+        const pilot2Name = pilots[1] ? (typeof pilots[1] === 'string' ? pilots[1] : pilots[1].name) : null;
 
-            // Count tasks per pilot by matching owner_id to profile names
-            let pilot1Count = 0;
-            let pilot2Count = 0;
+        if (totalTasks > 0 && pilot1Name && pilot2Name) {
+          // Count tasks per pilot using assigned_to field
+          // assigned_to should be 'Pilot' or 'Co-Pilot'
+          let pilot1Count = 0;
+          let pilot2Count = 0;
 
-            tasks?.forEach(task => {
-              if (task.owner_id) {
-                const ownerName = profileMap[task.owner_id];
-                // Match by full name or initials/short name
-                if (ownerName) {
-                  // Try exact match first
-                  if (ownerName === pilot1Name || 
-                      (pilot1Name && ownerName.toLowerCase().includes(pilot1Name.toLowerCase())) ||
-                      (pilot1Name && pilot1Name.toLowerCase().includes(ownerName.toLowerCase()))) {
-                    pilot1Count++;
-                  } else if (ownerName === pilot2Name || 
-                             (pilot2Name && ownerName.toLowerCase().includes(pilot2Name.toLowerCase())) ||
-                             (pilot2Name && pilot2Name.toLowerCase().includes(ownerName.toLowerCase()))) {
-                    pilot2Count++;
-                  }
-                }
-              }
-            });
-
-            setPilot1Tasks(pilot1Count);
-            setPilot2Tasks(pilot2Count);
-
-            // Determine color tint (>60% threshold)
-            const pilot1Percentage = (pilot1Count / totalTasks) * 100;
-            const pilot2Percentage = (pilot2Count / totalTasks) * 100;
-
-            if (pilot1Percentage > 60) {
-              setTintColor('pilot1');
-            } else if (pilot2Percentage > 60) {
-              setTintColor('pilot2');
-            } else {
-              setTintColor(null); // Neutral
+          // Count from action_items only (matching the totalTasks denominator)
+          actionItems?.forEach(item => {
+            const assignedTo = item.assigned_to || '';
+            if (assignedTo === 'Pilot') {
+              pilot1Count++;
+            } else if (assignedTo === 'Co-Pilot') {
+              pilot2Count++;
             }
+          });
+
+          setPilot1Tasks(pilot1Count);
+          setPilot2Tasks(pilot2Count);
+
+          // Determine color tint (>60% threshold)
+          const pilot1Percentage = (pilot1Count / totalTasks) * 100;
+          const pilot2Percentage = (pilot2Count / totalTasks) * 100;
+
+          if (pilot1Percentage > 60) {
+            setTintColor('pilot1');
+          } else if (pilot2Percentage > 60) {
+            setTintColor('pilot2');
           } else {
-            setTintColor(null);
+            setTintColor(null); // Neutral
           }
+        } else {
+          setTintColor(null);
         }
       } catch (err) {
         console.error('Error fetching weekly summary:', err);
@@ -138,8 +120,8 @@ export default function WeeklySummary({ householdId, household }) {
   const pilot1Color = pilot1?.color || '#14b8a6'; // Teal
   const pilot2Color = pilot2?.color || '#6366f1'; // Indigo
 
-  // Determine card styling based on tint
-  let cardClasses = 'relative p-6 bg-slate-900/40 backdrop-blur-md border border-slate-700/30 rounded-xl shadow-lg';
+  // Determine card styling based on tint - Enhanced mobile polish
+  let cardClasses = 'relative p-4 sm:p-6 bg-slate-900/40 backdrop-blur-md border border-slate-700/30 rounded-xl shadow-lg';
   let glowClasses = '';
   let borderClasses = 'border-slate-700/30';
 
@@ -165,14 +147,14 @@ export default function WeeklySummary({ householdId, household }) {
         <>
           {/* Header */}
           <div className="mb-6 text-center">
-            <h2 className="text-lg font-semibold text-white mb-1">1-Week Summary</h2>
+            <h2 className="text-lg sm:text-xl font-semibold text-white mb-1">1-Week Summary</h2>
             <p className="text-xs text-slate-400">Next 7 days</p>
           </div>
 
           {/* Summary Card */}
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-4 sm:gap-6">
             <div className="text-center">
-              <div className="text-4xl font-bold text-white mb-2">
+              <div className="text-3xl sm:text-4xl font-bold text-white mb-2 tracking-tight">
                 {eventCount} Events | {taskCount} Tasks
               </div>
               <div className="text-xs text-slate-400">

@@ -110,33 +110,31 @@ function MentalLoadMeter({ householdId }) {
 
     const calculateMentalLoad = async () => {
       try {
-        // Fetch all active tasks (pending or in_progress)
-        const { data: tasks, error } = await supabase
-          .from('tasks')
-          .select('*')
+        // Fetch all active action_items (tasks) - pending or in_progress
+        const { data: actionItems, error: actionItemsError } = await supabase
+          .from('action_items')
+          .select('burden_score, status')
           .eq('household_id', householdId)
           .in('status', ['pending', 'in_progress']);
 
-        if (error) {
-          console.error('Error fetching tasks for mental load:', error);
+        if (actionItemsError) {
+          console.error('Error fetching action_items for mental load:', actionItemsError);
           return;
         }
 
-        // Calculate load using 1-3 scale (Low=1, Medium=2, High=3) multiplied by 10
-        // Formula: (Total Active Tasks * 10) + (Sum of cognitive_weight scores * 10)
-        // This ensures the meter stays impactful with the simpler scale
-        const totalActiveTasks = tasks?.length || 0;
-        const burdenScores = tasks?.reduce((sum, task) => {
-          const weight = task.cognitive_weight?.toLowerCase() || 'medium';
-          // Map to 1-3 scale: Low=1, Medium=2, High=3 (handles both 'Heavy' and 'High' for backwards compatibility)
-          if (weight === 'low') return sum + 1;
-          if (weight === 'medium') return sum + 2;
-          if (weight === 'high' || weight === 'heavy') return sum + 3; // Support both 'High' and 'Heavy' for backwards compatibility
-          return sum + 2; // default to medium
-        }, 0) || 0;
+        // Sum burden_scores from action_items
+        // burden_score is numeric: 1=Low, 2=Medium, 3=High
+        // Note: If master items/events from households table also have burden_score,
+        // they should be queried from their respective table, not from the households table itself
+        const actionItemsBurden = (actionItems || []).reduce((sum, item) => {
+          return sum + (item.burden_score || 0);
+        }, 0);
 
-        // Multiply by 10 to keep the meter impactful
-        const calculatedLoad = (totalActiveTasks * 10) + (burdenScores * 10);
+        // Calculate total burden (sum of all action_items burden_scores)
+        const totalBurden = actionItemsBurden;
+        
+        // Multiply by 10 to keep the meter impactful (since max is now 3 instead of 10)
+        const calculatedLoad = totalBurden * 10;
         setLoad(calculatedLoad);
 
         // Set color based on load
