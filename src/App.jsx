@@ -162,13 +162,13 @@ function App() {
         .limit(1);
 
       // If profile exists with household, use it
-      // Only mark onboarding complete if household has a name (is properly set up)
+      // STRICT: Only mark onboarding complete if household is 'Van Dieren Home'
       if (profiles && profiles.length > 0 && profiles[0].household) {
         const household = profiles[0].household;
         setHousehold(household);
         
-        // Only mark onboarding complete if household is properly set up (has a name)
-        if (household.name) {
+        // STRICT ONBOARDING: Only skip onboarding if household is 'Van Dieren Home'
+        if (household.name === 'Van Dieren Home') {
           setOnboardingComplete(true);
           setIsPremium(household.is_premium || false);
           
@@ -181,11 +181,12 @@ function App() {
           localStorage.setItem('onboardingComplete', 'true');
           localStorage.setItem('householdData', JSON.stringify(household));
         } else {
-          // Household exists but not set up - show onboarding
-          // Reset state to safe defaults for new onboarding session
+          // User is part of a different household - force onboarding to join 'Van Dieren Home'
           setOnboardingComplete(false);
           setIsPremium(false);
           setShowEventReviewer(false);
+          // Check if 'Van Dieren Home' exists to show join option
+          await checkForExistingHousehold(user.id);
         }
       } else if (email) {
         // Try searching by email
@@ -202,13 +203,23 @@ function App() {
         if (emailProfiles && emailProfiles.length > 0 && emailProfiles[0].household) {
           const household = emailProfiles[0].household;
           setHousehold(household);
-          setOnboardingComplete(true);
-          setIsPremium(household.is_premium || false);
           
-          if (household.is_premium) {
-            setShowEventReviewer(false);
+          // STRICT ONBOARDING: Only skip onboarding if household is 'Van Dieren Home'
+          if (household.name === 'Van Dieren Home') {
+            setOnboardingComplete(true);
+            setIsPremium(household.is_premium || false);
+            
+            if (household.is_premium) {
+              setShowEventReviewer(false);
+            } else {
+              setShowEventReviewer(true);
+            }
           } else {
-            setShowEventReviewer(true);
+            // User is part of a different household - force onboarding
+            setOnboardingComplete(false);
+            setIsPremium(false);
+            setShowEventReviewer(false);
+            await checkForExistingHousehold(user.id);
           }
         } else {
           // No household found - check if "Van Dieren Home" exists to join
@@ -401,7 +412,7 @@ function App() {
       
       {/* Version Tag - Visible for deployment verification */}
       <div id="version-tag" className="fixed bottom-0 left-0 right-0 bg-slate-900/90 border-t border-slate-800/50 px-4 py-2 text-xs text-slate-400 text-center z-50">
-        <span>v1.1.2</span>
+        <span>v1.1.3</span>
         {import.meta.env.BUILD_TIME && (
           <span className="ml-2 text-slate-500">| Build: {new Date(import.meta.env.BUILD_TIME).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
         )}

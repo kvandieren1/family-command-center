@@ -167,7 +167,8 @@ function MentalLoadMeter({ householdId }) {
 
         // Sum burden_scores from action_items
         // burden_score is numeric: 1=Low, 2=Medium, 3=High
-        const actionItemsBurden = (actionItems || []).reduce((sum, item) => {
+        // Example: Leia's Birthday (3) + Goody Bags (2) + Chocolate (1) = 6 total
+        const actionItemsBurden = actionItems.reduce((sum, item) => {
           return sum + (item.burden_score || 0);
         }, 0);
 

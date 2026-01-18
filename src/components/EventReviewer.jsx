@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { COGNITIVE_WEIGHT, supabase } from '../lib/supabase';
 
@@ -10,59 +10,17 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
   const [starredCount, setStarredCount] = useState(0);
   const [selectedWeights, setSelectedWeights] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const [useMockEvents, setUseMockEvents] = useState(true); // Start with true, will check session and update
 
-  // Check for valid Google session on mount and listen for auth changes
-  useEffect(() => {
-    const checkGoogleSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session && session.provider_token) {
-          // Valid Google session detected - default to calendar
-          setUseMockEvents(false);
-        } else {
-          // No valid session - default to mock
-          setUseMockEvents(true);
-        }
-      } catch (err) {
-        console.error('Error checking session:', err);
-        // Default to mock on error
-        setUseMockEvents(true);
-      }
-    };
-
-    checkGoogleSession();
-
-    // Listen for auth state changes (e.g., when user returns from OAuth redirect)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.provider_token) {
-        // User just signed in via Google OAuth - switch to calendar and fetch events
-        setUseMockEvents(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!useMockEvents) {
-      fetchGoogleCalendarEvents();
-    } else {
-      // If no Google Calendar connection, show empty state
+  // Fetch Google Calendar events function (memoized with useCallback)
+  const fetchGoogleCalendarEvents = useCallback(async () => {
+    if (!householdId) {
       setEvents([]);
       setIsLoading(false);
+      return;
     }
-  }, [householdId, useMockEvents]);
 
-  const fetchGoogleCalendarEvents = async () => {
     try {
       setIsLoading(true);
-      
-      // DEBUG: Log start of fetch
-      console.log('[EventReviewer] Starting Google Calendar fetch...');
       
       // Get the user session to access provider_token
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -74,34 +32,19 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
         return;
       }
 
-      // DEBUG: Log session info
-      console.log('[EventReviewer] Session found:', {
-        hasUser: !!session.user,
-        userEmail: session.user?.email,
-        hasProviderToken: !!session.provider_token,
-        hasAccessToken: !!session.access_token
-      });
-
       // Get provider token from session
-      // Supabase stores OAuth provider tokens in the session
       const providerToken = session.provider_token || session.access_token;
       
       if (!providerToken) {
         console.log('[EventReviewer] No provider token found');
         setEvents([]);
         setIsLoading(false);
-        setUseMockEvents(true);
         return;
       }
-
-      // DEBUG: Log token (first 20 chars only for security)
-      console.log('[EventReviewer] Using token:', providerToken.substring(0, 20) + '...');
 
       // Fetch events from Google Calendar API (last 15 events)
       const timeMin = new Date().toISOString();
       const apiUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&maxResults=15&singleEvents=true&orderBy=startTime`;
-      
-      console.log('[EventReviewer] Fetching from:', apiUrl);
       
       const response = await fetch(apiUrl, {
         headers: {
@@ -110,8 +53,6 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
         }
       });
 
-      console.log('[EventReviewer] API Response status:', response.status, response.statusText);
-
       if (!response.ok) {
         const errorText = await response.text();
         console.error('[EventReviewer] Google Calendar API error:', {
@@ -119,18 +60,12 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
           statusText: response.statusText,
           error: errorText
         });
-        throw new Error(`Google Calendar API error: ${response.status} - ${errorText}`);
+        throw new Error(`Google Calendar API error: ${response.status}`);
       }
 
       const data = await response.json();
       const googleEvents = data.items || [];
       
-      // DEBUG: Log events received
-      console.log('[EventReviewer] Google Calendar API returned:', {
-        totalEvents: googleEvents.length,
-        events: googleEvents.map(e => ({ id: e.id, summary: e.summary, start: e.start }))
-      });
-
       // Transform Google Calendar events to our format
       const transformedEvents = googleEvents.map((event, index) => {
         const start = event.start?.dateTime || event.start?.date;
@@ -171,7 +106,41 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [householdId]);
+
+  useEffect(() => {
+    // Listen for auth state changes (e.g., when user returns from OAuth redirect)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.provider_token) {
+        // User just signed in via Google OAuth - fetch events
+        fetchGoogleCalendarEvents();
+      }
+    });
+
+    // Check session on mount and fetch events
+    const checkAndFetch = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.provider_token) {
+          fetchGoogleCalendarEvents();
+        } else {
+          // No Google Calendar connection - show empty state
+          setEvents([]);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.error('Error checking session:', err);
+        setEvents([]);
+        setIsLoading(false);
+      }
+    };
+
+    checkAndFetch();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [householdId, fetchGoogleCalendarEvents]);
 
   const currentEvent = events[currentIndex];
 
@@ -277,7 +246,7 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center">
           <div className="text-slate-400 mb-4 text-lg">
-            {!useMockEvents ? 'Fetching your family schedule...' : 'Loading calendar events...'}
+            Fetching your family schedule...
           </div>
           <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
@@ -310,32 +279,21 @@ export default function EventReviewer({ onStarredCountChange, onComplete, househ
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
-        {/* Toggle: Mock vs Real Calendar */}
-        <div className="mb-6 flex items-center justify-center gap-4">
-          <span className="text-sm text-slate-400">Event Source:</span>
-          <div className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl p-1">
+        {/* Empty State - No Events */}
+        {events.length === 0 && !isLoading && (
+          <div className="mb-6 text-center py-12 bg-slate-900/50 border border-slate-800/50 rounded-xl">
+            <div className="text-slate-400 mb-4">No calendar events found</div>
             <button
-              onClick={() => setUseMockEvents(true)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                useMockEvents
-                  ? 'bg-teal-500/20 text-teal-400 border border-teal-500/40'
-                  : 'text-slate-400 active:text-slate-300'
-              }`}
+              onClick={() => {
+                // Trigger Google Calendar OAuth
+                window.location.href = '/';
+              }}
+              className="px-6 py-3 bg-teal-500/20 border border-teal-500/40 text-teal-400 rounded-xl active:bg-teal-500/30 transition-all"
             >
-              Use Mock Events
-            </button>
-            <button
-              onClick={() => setUseMockEvents(false)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                !useMockEvents
-                  ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40'
-                  : 'text-slate-400 active:text-slate-300'
-              }`}
-            >
-              Use My Calendar
+              + Connect Google Calendar
             </button>
           </div>
-        </div>
+        )}
 
         {/* Progress Indicator */}
         <div className="mb-6">
