@@ -147,8 +147,8 @@ function App() {
           if (result.household.is_premium) {
             setShowEventReviewer(false);
           } else {
-            // Show Event Reviewer after successful login
-            setShowEventReviewer(true);
+            // SIMPLIFIED: Skip EventReviewer, go straight to Dashboard
+            setShowEventReviewer(false);
           }
           
           localStorage.setItem('onboardingComplete', 'true');
@@ -156,10 +156,10 @@ function App() {
             localStorage.setItem('householdData', JSON.stringify(result.household));
           }
         } else if (result.success && result.user) {
-          // User logged in but no household found - advance to Event Reviewer
-          console.log('User logged in, no household found. Advancing to Event Reviewer.');
+          // User logged in but no household found - go to Dashboard (they'll see empty state)
+          console.log('User logged in, no household found. Going to Dashboard.');
           setOnboardingComplete(true);
-          setShowEventReviewer(true);
+          setShowEventReviewer(false);
         }
       }
     } catch (err) {
@@ -199,11 +199,8 @@ function App() {
           setOnboardingComplete(true);
           setIsPremium(household.is_premium || false);
           
-          if (household.is_premium) {
-            setShowEventReviewer(false);
-          } else {
-            setShowEventReviewer(true);
-          }
+          // SIMPLIFIED: Skip EventReviewer, go straight to Dashboard
+          setShowEventReviewer(false);
           
           localStorage.setItem('onboardingComplete', 'true');
           localStorage.setItem('householdData', JSON.stringify(household));
@@ -236,11 +233,8 @@ function App() {
             setOnboardingComplete(true);
             setIsPremium(household.is_premium || false);
             
-            if (household.is_premium) {
-              setShowEventReviewer(false);
-            } else {
-              setShowEventReviewer(true);
-            }
+            // SIMPLIFIED: Skip EventReviewer, go straight to Dashboard
+            setShowEventReviewer(false);
           } else {
             // User is part of a different household - force onboarding
             setOnboardingComplete(false);

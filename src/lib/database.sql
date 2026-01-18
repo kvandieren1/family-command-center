@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS action_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   household_id UUID REFERENCES households(id) ON DELETE CASCADE,
   parent_id UUID REFERENCES action_items(id) ON DELETE CASCADE, -- For nested sub-tasks
+  related_event_id UUID REFERENCES calendar_events(id) ON DELETE SET NULL, -- Link task to event (optional)
   title TEXT NOT NULL,
   description TEXT,
   due_date DATE,
@@ -68,7 +69,7 @@ CREATE TABLE IF NOT EXISTS meals (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Calendar Events (synced from Google Calendar)
+-- Calendar Events (synced from Google Calendar or manually created)
 CREATE TABLE IF NOT EXISTS calendar_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   household_id UUID REFERENCES households(id) ON DELETE CASCADE,
@@ -79,6 +80,9 @@ CREATE TABLE IF NOT EXISTS calendar_events (
   end_time TIMESTAMP WITH TIME ZONE NOT NULL,
   dependent_id UUID REFERENCES profiles(id),
   color_code TEXT,
+  starred BOOLEAN DEFAULT false, -- Indicates if someone has tasks related to this event
+  burden_score INTEGER CHECK (burden_score IN (1, 2, 3)), -- 1=Low, 2=Medium, 3=High
+  assigned_to TEXT CHECK (assigned_to IN ('Pilot', 'Co-Pilot')), -- Pilot/Co-Pilot assignment
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
