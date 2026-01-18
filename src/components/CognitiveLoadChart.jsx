@@ -1,7 +1,8 @@
-import React from 'react';
-import { MOCK_DATA } from '../lib/mockData';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
-export default function CognitiveLoadChart() {
+export default function CognitiveLoadChart({ householdId }) {
+  const [tasks, setTasks] = useState([]);
   // Use current date instead of hardcoded date for dynamic week calculation
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Normalize to start of day
@@ -24,15 +25,52 @@ export default function CognitiveLoadChart() {
     return d.toISOString().split('T')[0];
   });
 
+  // Fetch tasks from action_items when householdId is available
+  useEffect(() => {
+    if (!householdId) return;
+
+    const fetchTasks = async () => {
+      try {
+        const { data: actionItems, error } = await supabase
+          .from('action_items')
+          .select('*')
+          .eq('household_id', householdId)
+          .order('due_date', { ascending: true, nullsLast: true });
+
+        if (error) {
+          console.error('Error fetching action_items for CognitiveLoadChart:', error);
+          return;
+        }
+
+        // Transform to match expected format
+        const transformedTasks = (actionItems || []).map(item => ({
+          id: item.id,
+          dueDate: item.due_date,
+          owner: item.assigned_to === 'Pilot' ? 'Amy' : item.assigned_to === 'Co-Pilot' ? 'Kyle' : 'Unknown'
+        }));
+
+        setTasks(transformedTasks);
+      } catch (err) {
+        console.error('Error in fetchTasks (CognitiveLoadChart):', err);
+      }
+    };
+
+    fetchTasks();
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchTasks, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [householdId]);
+
   const calculateWeekStats = (days) => {
     // Filter tasks that match any day in the week
-    const weekTasks = MOCK_DATA.tasks.filter(t => {
+    const weekTasks = tasks.filter(t => {
       if (!t.dueDate) return false;
-      // Direct string comparison - tasks have dates like "2026-01-15"
-      return days.includes(t.dueDate);
+      // Format due_date to match day strings (YYYY-MM-DD)
+      const dateStr = typeof t.dueDate === 'string' ? t.dueDate.split('T')[0] : t.dueDate;
+      return days.includes(dateStr);
     });
     
-    // Count by owner name (not initials) - tasks have owner: "Amy" or "Kyle"
+    // Count by owner name - tasks have owner: "Amy" or "Kyle"
     const amyCount = weekTasks.filter(t => t.owner === 'Amy').length;
     const kyleCount = weekTasks.filter(t => t.owner === 'Kyle').length;
     const total = amyCount + kyleCount;

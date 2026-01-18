@@ -162,21 +162,30 @@ function App() {
         .limit(1);
 
       // If profile exists with household, use it
+      // Only mark onboarding complete if household has a name (is properly set up)
       if (profiles && profiles.length > 0 && profiles[0].household) {
         const household = profiles[0].household;
         setHousehold(household);
-        setOnboardingComplete(true);
-        setIsPremium(household.is_premium || false);
         
-        if (household.is_premium) {
-          setShowEventReviewer(false);
-        } else {
-          setShowEventReviewer(true);
-        }
-        
-        localStorage.setItem('onboardingComplete', 'true');
+        // Only mark onboarding complete if household is properly set up (has a name)
         if (household.name) {
+          setOnboardingComplete(true);
+          setIsPremium(household.is_premium || false);
+          
+          if (household.is_premium) {
+            setShowEventReviewer(false);
+          } else {
+            setShowEventReviewer(true);
+          }
+          
+          localStorage.setItem('onboardingComplete', 'true');
           localStorage.setItem('householdData', JSON.stringify(household));
+        } else {
+          // Household exists but not set up - show onboarding
+          // Reset state to safe defaults for new onboarding session
+          setOnboardingComplete(false);
+          setIsPremium(false);
+          setShowEventReviewer(false);
         }
       } else if (email) {
         // Try searching by email
@@ -203,13 +212,17 @@ function App() {
           }
         } else {
           // No household found - user needs to complete onboarding
-          setOnboardingComplete(true);
-          setShowEventReviewer(true);
+          // Reset state to safe defaults for new onboarding session
+          setOnboardingComplete(false);
+          setIsPremium(false);
+          setShowEventReviewer(false);
         }
       } else {
         // No email - user needs to complete onboarding
-        setOnboardingComplete(true);
-        setShowEventReviewer(true);
+        // Reset state to safe defaults for new onboarding session
+        setOnboardingComplete(false);
+        setIsPremium(false);
+        setShowEventReviewer(false);
       }
     } catch (err) {
       console.error('Error in generic OAuth callback:', err);

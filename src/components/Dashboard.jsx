@@ -16,7 +16,9 @@ import SundaySyncModal from './SundaySyncModal';
 import IntroOverlay from './IntroOverlay';
 
 export default function Dashboard() {
-  const [household, setHousehold] = useState(MOCK_DATA.household);
+  const [household, setHousehold] = useState(null);
+  const [tasks, setTasks] = useState([]);
+  const [goals, setGoals] = useState([]);
   const [activeModal, setActiveModal] = useState(null);
   const [activeView, setActiveView] = useState('dashboard');
   const [showIntro, setShowIntro] = useState(false);
@@ -113,6 +115,88 @@ export default function Dashboard() {
     };
   }, [hasSession]);
 
+  // Fetch tasks from action_items when household ID is available
+  useEffect(() => {
+    if (!hasSession || !household?.id) return;
+
+    const fetchTasks = async () => {
+      try {
+        const { data: actionItems, error } = await supabase
+          .from('action_items')
+          .select('*')
+          .eq('household_id', household.id)
+          .order('due_date', { ascending: true, nullsLast: true });
+
+        if (error) {
+          console.error('Error fetching action_items:', error);
+          return;
+        }
+
+        // Transform action_items to match CalendarView expected format
+        const transformedTasks = (actionItems || []).map(item => ({
+          id: item.id,
+          title: item.title,
+          dueDate: item.due_date,
+          owner: item.assigned_to === 'Pilot' ? 'Amy' : item.assigned_to === 'Co-Pilot' ? 'Kyle' : 'Unknown',
+          cognitiveWeight: item.burden_score === 1 ? 'Low' : item.burden_score === 2 ? 'Medium' : item.burden_score === 3 ? 'High' : 'Medium',
+          dependent: item.dependent_id ? 'Dependent' : null,
+          status: item.status
+        }));
+
+        if (isMountedRef.current) {
+          setTasks(transformedTasks);
+        }
+      } catch (err) {
+        if (isMountedRef.current) {
+          console.error('Error in fetchTasks:', err);
+        }
+      }
+    };
+
+    fetchTasks();
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchTasks, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [hasSession, household?.id]);
+
+  // Fetch goals when household ID is available
+  // Note: Goals table doesn't exist in current schema - using empty array for now
+  // If goals are stored elsewhere (e.g., in households table as JSON), update this query
+  useEffect(() => {
+    if (!hasSession || !household?.id) return;
+
+    const fetchGoals = async () => {
+      try {
+        // TODO: Add goals table to database schema, then uncomment:
+        // const { data: goalsData, error } = await supabase
+        //   .from('goals')
+        //   .select('*')
+        //   .eq('household_id', household.id)
+        //   .order('target_date', { ascending: true });
+        //
+        // if (error) {
+        //   console.error('Error fetching goals:', error);
+        //   return;
+        // }
+        //
+        // if (isMountedRef.current) {
+        //   setGoals(goalsData || []);
+        // }
+
+        // For now, goals remain empty until goals table is added to schema
+        if (isMountedRef.current) {
+          setGoals([]);
+        }
+      } catch (err) {
+        if (isMountedRef.current) {
+          console.error('Error in fetchGoals:', err);
+        }
+      }
+    };
+
+    fetchGoals();
+  }, [hasSession, household?.id]);
+
   // Don't render if no session
   if (!hasSession) {
     return null;
@@ -199,27 +283,27 @@ export default function Dashboard() {
 
           {/* 2. Weekly Balance Chart */}
           <div className="order-2 lg:col-span-3">
-            <CognitiveLoadChart />
+            <CognitiveLoadChart householdId={household?.id} />
           </div>
 
           {/* 3. 14-Day Calendar */}
           <div className="order-3 lg:col-span-6 lg:row-span-2">
-            <CalendarView tasks={MOCK_DATA.tasks} />
+            <CalendarView tasks={tasks} />
           </div>
 
           {/* 4. 2026 Goals */}
           <div className="order-4 lg:col-span-3">
-            <GoalsTable goals={MOCK_DATA.goals2026} />
+            <GoalsTable goals={goals} />
           </div>
 
           {/* 5. Delivery Stats - Hidden on mobile, shown on desktop */}
           <div className="hidden lg:block lg:col-span-3">
-            <DeliveryStats tasks={MOCK_DATA.tasks} />
+            <DeliveryStats tasks={tasks} />
           </div>
 
           {/* 6. Upcoming Tasks */}
           <div className="order-5 lg:col-span-3">
-            <TaskSummary tasks={MOCK_DATA.tasks} />
+            <TaskSummary tasks={tasks} />
           </div>
         </div>
       </main>
