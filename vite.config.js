@@ -4,8 +4,13 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // Generate build timestamp for cache busting
 const BUILD_VERSION = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+const BUILD_TIME = new Date().toISOString();
 
 export default defineConfig({
+  define: {
+    // Inject build timestamp at build time
+    'import.meta.env.BUILD_TIME': JSON.stringify(BUILD_TIME),
+  },
   plugins: [
     react(),
     VitePWA({
@@ -72,12 +77,13 @@ export default defineConfig({
     })
   ],
   build: {
-    // Ensure unique filenames on every build
+    // Ensure unique filenames on every build using content-based hashing
+    // contenthash changes when file content changes, ensuring proper cache invalidation
     rollupOptions: {
       output: {
-        entryFileNames: `assets/[name]-${BUILD_VERSION}-[hash].js`,
-        chunkFileNames: `assets/[name]-${BUILD_VERSION}-[hash].js`,
-        assetFileNames: `assets/[name]-${BUILD_VERSION}-[hash].[ext]`
+        entryFileNames: `assets/[name]-[contenthash].js`,
+        chunkFileNames: `assets/[name]-[contenthash].js`,
+        assetFileNames: `assets/[name]-[contenthash].[ext]`
       }
     },
     // Add cache-busting query params

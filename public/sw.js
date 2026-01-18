@@ -87,3 +87,11 @@ self.addEventListener('notificationclick', (event) => {
     clients.openWindow('/')
   )
 })
+
+// Listen for SKIP_WAITING message from the main thread
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('[Service Worker] Received SKIP_WAITING command, activating immediately');
+    self.skipWaiting();
+  }
+})
