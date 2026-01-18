@@ -224,7 +224,7 @@ export async function toggleEventPlanning(eventId, initialWeight, householdId, o
     const dueDate = eventData.start_time ? new Date(eventData.start_time).toISOString().split('T')[0] : null;
 
     const { data: taskData, error: taskCreateError } = await supabase
-      .from('tasks')
+      .from('action_items')
       .insert([
         {
           household_id: householdId,
@@ -299,10 +299,10 @@ export async function getStarredEvents(householdId) {
       };
     }
 
-    // Fetch all tasks for this household (we'll match by title/description for now)
+    // Fetch all action_items for this household (we'll match by title/description for now)
     // Note: Without parent_event_id column, we can't directly link, so we return events with empty task data
     const { data: tasks, error: tasksError } = await supabase
-      .from('tasks')
+      .from('action_items')
       .select('*')
       .eq('household_id', householdId);
 

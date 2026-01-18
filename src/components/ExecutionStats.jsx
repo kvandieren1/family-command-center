@@ -16,7 +16,7 @@ export default function ExecutionStats({ householdId }) {
   const loadStats = async () => {
     // Calculate streak (consecutive days with completed tasks)
     const { data: tasks } = await supabase
-      .from('tasks')
+      .from('action_items')
       .select('completed_at, due_date, status')
       .eq('household_id', householdId)
       .order('completed_at', { ascending: false })

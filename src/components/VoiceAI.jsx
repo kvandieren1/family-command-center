@@ -95,7 +95,7 @@ export default function VoiceAI() {
         )
 
         const { error } = await supabase
-          .from('tasks')
+          .from('action_items')
           .insert({
             household_id: householdId,
             owner_id: owner?.id,
@@ -144,7 +144,7 @@ export default function VoiceAI() {
 
     if (owner && text.length > 10) {
       await supabase
-        .from('tasks')
+        .from('action_items')
         .insert({
           household_id: householdId,
           owner_id: owner.id,
