@@ -20,11 +20,33 @@ export default function Dashboard() {
   const [activeModal, setActiveModal] = useState(null);
   const [activeView, setActiveView] = useState('dashboard');
   const [showIntro, setShowIntro] = useState(false);
+  const [hasSession, setHasSession] = useState(false);
   const isMountedRef = useRef(true);
+
+  // Check for active session - protect Dashboard
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          // No session - redirect to login
+          window.location.href = '/';
+          return;
+        }
+        setHasSession(true);
+      } catch (err) {
+        console.error('Error checking session:', err);
+        window.location.href = '/';
+      }
+    };
+
+    checkSession();
+  }, []);
 
   useEffect(() => {
     // Ensure we're in the browser environment
     if (typeof window === 'undefined') return;
+    if (!hasSession) return; // Don't proceed if no session
 
     // Mark component as mounted
     isMountedRef.current = true;
@@ -89,7 +111,12 @@ export default function Dashboard() {
     return () => {
       isMountedRef.current = false;
     };
-  }, []);
+  }, [hasSession]);
+
+  // Don't render if no session
+  if (!hasSession) {
+    return null;
+  }
 
   const handleToggle = (modal, view) => {
     setActiveModal(modal);

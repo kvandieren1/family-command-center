@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, handleGoogleCallback } from './lib/supabase';
+import { determineUserRole } from './services/auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import Dashboard from './components/Dashboard';
 import SetupWizard from './components/SetupWizard';
 import EventReviewer from './components/EventReviewer';
 import PremiumGate from './components/PremiumGate';
+import Auth from './components/Auth';
 
 // Household ID is now dynamically retrieved from authenticated user's household
 // No hardcoded household ID - each user accesses only their own household data
@@ -17,6 +19,7 @@ function App() {
   const [showEventReviewer, setShowEventReviewer] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [household, setHousehold] = useState(null);
+  const [userRole, setUserRole] = useState(null); // 'Pilot' or 'Co-Pilot'
 
   useEffect(() => {
     // Check if user is already logged in on initial load
@@ -76,7 +79,7 @@ function App() {
   const handleOAuthCallback = async (session) => {
     try {
       if (!session) {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const { data: { session: currentSession } = {} } = await supabase.auth.getSession();
         session = currentSession;
       }
 
@@ -86,33 +89,51 @@ function App() {
       }
 
       setIsLoggedIn(true);
-      const result = await handleGoogleCallback();
       
-      if (result.success && result.household) {
-        // Found existing household
-        console.log('Existing household found via Google login:', result.household);
-        setHousehold(result.household);
-        setOnboardingComplete(true);
-        setIsPremium(result.household.is_premium || false);
+      // Determine user role based on email (for GitHub OAuth)
+      const userEmail = session.user?.email;
+      if (userEmail) {
+        const role = determineUserRole(userEmail);
+        setUserRole(role);
+        console.log(`User role assigned: ${role} (email: ${userEmail})`);
+      }
+
+      // Handle both Google and GitHub OAuth
+      // For GitHub, we'll use a similar flow but without Google-specific logic
+      const provider = session.user?.app_metadata?.provider || 'google';
+      
+      if (provider === 'github') {
+        // GitHub OAuth - use generic callback handler
+        await handleGenericOAuthCallback(session);
+      } else {
+        // Google OAuth - use existing handler
+        const result = await handleGoogleCallback();
         
-        // If premium, skip EventReviewer and go straight to Dashboard
-        if (result.household.is_premium) {
-          setShowEventReviewer(false);
-        } else {
-          // Show Event Reviewer after successful login
+        if (result.success && result.household) {
+          // Found existing household
+          console.log('Existing household found via Google login:', result.household);
+          setHousehold(result.household);
+          setOnboardingComplete(true);
+          setIsPremium(result.household.is_premium || false);
+          
+          // If premium, skip EventReviewer and go straight to Dashboard
+          if (result.household.is_premium) {
+            setShowEventReviewer(false);
+          } else {
+            // Show Event Reviewer after successful login
+            setShowEventReviewer(true);
+          }
+          
+          localStorage.setItem('onboardingComplete', 'true');
+          if (result.household.name) {
+            localStorage.setItem('householdData', JSON.stringify(result.household));
+          }
+        } else if (result.success && result.user) {
+          // User logged in but no household found - advance to Event Reviewer
+          console.log('User logged in, no household found. Advancing to Event Reviewer.');
+          setOnboardingComplete(true);
           setShowEventReviewer(true);
         }
-        
-        localStorage.setItem('onboardingComplete', 'true');
-        if (result.household.name) {
-          localStorage.setItem('householdData', JSON.stringify(result.household));
-        }
-      } else if (result.success && result.user) {
-        // User logged in but no household found - advance to Event Reviewer
-        console.log('User logged in, no household found. Advancing to Event Reviewer.');
-        setOnboardingComplete(true);
-        setShowEventReviewer(true);
-        // User can complete onboarding later if needed
       }
     } catch (err) {
       console.error('Error handling OAuth callback:', err);
@@ -122,6 +143,78 @@ function App() {
       if (window.location.search.includes('code=')) {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
+    }
+  };
+
+  const handleGenericOAuthCallback = async (session) => {
+    try {
+      const user = session.user;
+      const email = user.email;
+
+      // Search for existing household by user's email
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          household:households(*)
+        `)
+        .eq('user_id', user.id)
+        .limit(1);
+
+      // If profile exists with household, use it
+      if (profiles && profiles.length > 0 && profiles[0].household) {
+        const household = profiles[0].household;
+        setHousehold(household);
+        setOnboardingComplete(true);
+        setIsPremium(household.is_premium || false);
+        
+        if (household.is_premium) {
+          setShowEventReviewer(false);
+        } else {
+          setShowEventReviewer(true);
+        }
+        
+        localStorage.setItem('onboardingComplete', 'true');
+        if (household.name) {
+          localStorage.setItem('householdData', JSON.stringify(household));
+        }
+      } else if (email) {
+        // Try searching by email
+        const { data: emailProfiles } = await supabase
+          .from('profiles')
+          .select(`
+            *,
+            household:households(*)
+          `)
+          .ilike('email', `%${email}%`)
+          .eq('type', 'owner')
+          .limit(1);
+
+        if (emailProfiles && emailProfiles.length > 0 && emailProfiles[0].household) {
+          const household = emailProfiles[0].household;
+          setHousehold(household);
+          setOnboardingComplete(true);
+          setIsPremium(household.is_premium || false);
+          
+          if (household.is_premium) {
+            setShowEventReviewer(false);
+          } else {
+            setShowEventReviewer(true);
+          }
+        } else {
+          // No household found - user needs to complete onboarding
+          setOnboardingComplete(true);
+          setShowEventReviewer(true);
+        }
+      } else {
+        // No email - user needs to complete onboarding
+        setOnboardingComplete(true);
+        setShowEventReviewer(true);
+      }
+    } catch (err) {
+      console.error('Error in generic OAuth callback:', err);
+      setOnboardingComplete(true);
+      setShowEventReviewer(true);
     }
   };
 
@@ -201,10 +294,15 @@ function App() {
     );
   }
 
+  // Show login page if not logged in
+  if (!isLoggedIn) {
+    return <Auth />;
+  }
+
   return (
     <div className="App bg-slate-950 min-h-screen overflow-x-hidden">
       <AnimatePresence mode="wait">
-        {!isLoggedIn || !onboardingComplete ? (
+        {!onboardingComplete ? (
           <motion.div
             key="setup"
             initial={{ opacity: 0 }}
