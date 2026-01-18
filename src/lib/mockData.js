@@ -370,8 +370,9 @@ export function getDaysUntilVacation() {
   return Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 }
 
-// Export a computed value for backwards compatibility (but it's now a function call)
-export const daysUntilVacation = getDaysUntilVacation();
+// Export as a function since Dashboard.jsx calls it as daysUntilVacation()
+// This ensures the value is recalculated each time it's called, not just once at module init
+export const daysUntilVacation = () => getDaysUntilVacation();
 
 // Helper Functions - Data Access Layer
 

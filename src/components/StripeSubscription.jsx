@@ -3,24 +3,48 @@ import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { supabase } from '../lib/supabase'
 
-// Validate Stripe publishable key before initializing
-const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+// Lazy initialization of Stripe - validation happens when component renders, not at module import
+// This prevents breaking the entire app if StripeSubscription is never used or key is missing
+let stripePromise = null;
 
-if (!stripePublishableKey || stripePublishableKey.trim() === '') {
-  console.error(
-    'Stripe Publishable Key is not configured. Please set VITE_STRIPE_PUBLISHABLE_KEY in your environment variables.'
-  );
-  // Create a rejected promise to prevent silent failures
-  throw new Error(
-    'Stripe configuration error: VITE_STRIPE_PUBLISHABLE_KEY must be set in environment variables.'
-  );
+function getStripePromise() {
+  if (stripePromise) {
+    return stripePromise;
+  }
+  
+  const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+  
+  if (!stripePublishableKey || stripePublishableKey.trim() === '') {
+    console.error(
+      'Stripe Publishable Key is not configured. Please set VITE_STRIPE_PUBLISHABLE_KEY in your environment variables.'
+    );
+    // Return a rejected promise instead of throwing (prevents breaking app at import time)
+    return Promise.reject(
+      new Error(
+        'Stripe configuration error: VITE_STRIPE_PUBLISHABLE_KEY must be set in environment variables.'
+      )
+    );
+  }
+  
+  stripePromise = loadStripe(stripePublishableKey);
+  return stripePromise;
 }
-
-const stripePromise = loadStripe(stripePublishableKey)
 
 export default function StripeSubscription({ householdId }) {
   const [subscription, setSubscription] = useState(null)
   const [relationshipScore, setRelationshipScore] = useState(null)
+  const [stripeError, setStripeError] = useState(null)
+  const [stripeInstance, setStripeInstance] = useState(null)
+  
+  // Validate and initialize Stripe only when component renders
+  useEffect(() => {
+    getStripePromise()
+      .then(setStripeInstance)
+      .catch((error) => {
+        console.error('Stripe initialization error:', error);
+        setStripeError(error.message);
+      });
+  }, []);
 
   useEffect(() => {
     if (householdId) {
@@ -79,8 +103,27 @@ export default function StripeSubscription({ householdId }) {
     }
   }
 
+  if (stripeError) {
+    return (
+      <div className="p-4 border border-red-500/50 bg-red-500/10 text-red-400 text-sm rounded-lg">
+        <strong>Stripe Configuration Error:</strong> {stripeError}
+        <p className="mt-2 text-xs text-red-300/80">
+          Please configure VITE_STRIPE_PUBLISHABLE_KEY in your environment variables to enable payment processing.
+        </p>
+      </div>
+    );
+  }
+
+  if (!stripeInstance) {
+    return (
+      <div className="p-4 border border-slate-700/50 bg-slate-900/50 text-slate-300 text-sm rounded-lg">
+        Initializing payment system...
+      </div>
+    );
+  }
+
   return (
-    <Elements stripe={stripePromise}>
+    <Elements stripe={stripeInstance}>
       <SubscriptionForm 
         householdId={householdId} 
         subscription={subscription}

@@ -163,11 +163,14 @@ function App() {
   // Poll for premium status changes (in case it's updated elsewhere)
   useEffect(() => {
     if (onboardingComplete && !isPremium && showEventReviewer && household?.id) {
+      // Capture household.id to avoid stale closure issues
+      const currentHouseholdId = household.id;
+      
       const interval = setInterval(async () => {
         const { data } = await supabase
           .from('households')
           .select('is_premium')
-          .eq('id', household.id)
+          .eq('id', currentHouseholdId)
           .single();
 
         if (data?.is_premium && !isPremium) {
@@ -179,7 +182,7 @@ function App() {
 
       return () => clearInterval(interval);
     }
-  }, [onboardingComplete, isPremium, showEventReviewer]);
+  }, [onboardingComplete, isPremium, showEventReviewer, household]); // Added household to dependency array
 
   const handleEventReviewerComplete = () => {
     setShowEventReviewer(false);
