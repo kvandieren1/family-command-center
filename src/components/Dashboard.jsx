@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MOCK_DATA } from '../lib/mockData';
-import { daysUntilVacation } from '../lib/mockData';
 import { getHouseholdData } from '../lib/householdStorage';
-import LogisticsTicker from './LogisticsTicker';
+import { supabase } from '../lib/supabase';
+import HeaderMeters from './HeaderMeters';
 import CalendarView from './CalendarView';
 import CognitiveLoadChart from './CognitiveLoadChart';
 import DeliveryStats from './DeliveryStats';
@@ -19,10 +19,14 @@ export default function Dashboard() {
   const [activeModal, setActiveModal] = useState(null);
   const [activeView, setActiveView] = useState('dashboard');
   const [showIntro, setShowIntro] = useState(false);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
     // Ensure we're in the browser environment
     if (typeof window === 'undefined') return;
+
+    // Mark component as mounted
+    isMountedRef.current = true;
 
     // 1. Check if intro has played this session
     try {
@@ -42,6 +46,48 @@ export default function Dashboard() {
     if (storedHousehold) {
       setHousehold(storedHousehold);
     }
+
+    // Try to get household ID from user session
+    const fetchHouseholdId = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Check if component is still mounted before proceeding
+        if (!isMountedRef.current) return;
+        
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('household_id, household:households(*)')
+            .eq('user_id', session.user.id)
+            .single();
+          
+          // Check again after async operation
+          if (!isMountedRef.current) return;
+          
+          if (profile?.household_id) {
+            // Update household with ID if we have it
+            setHousehold(prev => ({
+              ...prev,
+              id: profile.household_id,
+              ...(profile.household || {})
+            }));
+          }
+        }
+      } catch (err) {
+        // Only log if component is still mounted
+        if (isMountedRef.current) {
+          console.warn('Could not fetch household ID:', err);
+        }
+      }
+    };
+
+    fetchHouseholdId();
+
+    // Cleanup: Mark component as unmounted
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   const handleToggle = (modal, view) => {
@@ -78,10 +124,8 @@ export default function Dashboard() {
         />
       )}
 
-      {/* Top Banner Ticker with Vacation Meter */}
-      <div className="bg-slate-900/80 border-b border-slate-800/50">
-        <LogisticsTicker tickerData={MOCK_DATA.ticker} daysUntilVacation={daysUntilVacation()} vacationName={MOCK_DATA.nextVacation.name} />
-      </div>
+      {/* Top Header Meters - 3 Column Grid */}
+      <HeaderMeters householdId={household?.id} />
 
       {/* Welcome Banner */}
       <div className="bg-gradient-to-r from-slate-900/90 via-slate-800/90 to-slate-900/90 border-b border-slate-800/50 backdrop-blur-sm">
