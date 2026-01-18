@@ -3,6 +3,7 @@ import { MOCK_DATA } from '../lib/mockData';
 import { getHouseholdData } from '../lib/householdStorage';
 import { supabase } from '../lib/supabase';
 import HeaderMeters from './HeaderMeters';
+import WeeklySummary from './WeeklySummary';
 import CalendarView from './CalendarView';
 import CognitiveLoadChart from './CognitiveLoadChart';
 import DeliveryStats from './DeliveryStats';
@@ -164,28 +165,33 @@ export default function Dashboard() {
       {/* Main Content - Mobile-First Vertical Stack */}
       <main className="max-w-[1800px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4">
-          {/* 1. Weekly Balance Chart - First on mobile */}
-          <div className="order-1 lg:col-span-3">
+          {/* 1. Weekly Summary - Top 50% of mobile viewport */}
+          <div className="order-1 lg:col-span-12 mb-4">
+            <WeeklySummary householdId={household?.id} household={household} />
+          </div>
+
+          {/* 2. Weekly Balance Chart */}
+          <div className="order-2 lg:col-span-3">
             <CognitiveLoadChart />
           </div>
 
-          {/* 2. 14-Day Calendar - Second on mobile */}
-          <div className="order-2 lg:col-span-6 lg:row-span-2">
+          {/* 3. 14-Day Calendar */}
+          <div className="order-3 lg:col-span-6 lg:row-span-2">
             <CalendarView tasks={MOCK_DATA.tasks} />
           </div>
 
-          {/* 3. 2026 Goals - Third on mobile */}
-          <div className="order-3 lg:col-span-3">
+          {/* 4. 2026 Goals */}
+          <div className="order-4 lg:col-span-3">
             <GoalsTable goals={MOCK_DATA.goals2026} />
           </div>
 
-          {/* 4. Delivery Stats - Hidden on mobile, shown on desktop */}
+          {/* 5. Delivery Stats - Hidden on mobile, shown on desktop */}
           <div className="hidden lg:block lg:col-span-3">
             <DeliveryStats tasks={MOCK_DATA.tasks} />
           </div>
 
-          {/* 5. Upcoming Tasks - Fourth on mobile */}
-          <div className="order-4 lg:col-span-3">
+          {/* 6. Upcoming Tasks */}
+          <div className="order-5 lg:col-span-3">
             <TaskSummary tasks={MOCK_DATA.tasks} />
           </div>
         </div>
