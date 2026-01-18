@@ -63,7 +63,23 @@ function App() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setIsLoggedIn(true);
-        // Only fetch household if user is logged in
+        // Check if user has household_id in profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('household_id')
+          .eq('user_id', session.user.id)
+          .single();
+
+        // PRODUCTION HOUSEHOLD GUARD: If logged in but no household_id, force onboarding
+        if (!profile?.household_id) {
+          setIsLoggedIn(true); // User is authenticated
+          setOnboardingComplete(false); // Force onboarding
+          setHousehold(null);
+          setIsLoading(false);
+          return;
+        }
+
+        // Only fetch household if user is logged in and has household_id
         await handleOAuthCallback(session);
       } else {
         setIsLoggedIn(false);

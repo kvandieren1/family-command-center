@@ -23,7 +23,24 @@ CREATE TABLE IF NOT EXISTS profiles (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Tasks/Action Ledger
+-- Action Items Table (Production: 3-tier hierarchy support)
+CREATE TABLE IF NOT EXISTS action_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  household_id UUID REFERENCES households(id) ON DELETE CASCADE,
+  parent_id UUID REFERENCES action_items(id) ON DELETE CASCADE, -- For nested sub-tasks
+  title TEXT NOT NULL,
+  description TEXT,
+  due_date DATE,
+  burden_score INTEGER CHECK (burden_score IN (1, 2, 3)), -- 1=Low, 2=Medium, 3=High
+  assigned_to TEXT CHECK (assigned_to IN ('Pilot', 'Co-Pilot')), -- Pilot/Co-Pilot assignment
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'overdue')),
+  cpe_phase TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  completed_at TIMESTAMP WITH TIME ZONE,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tasks/Action Ledger (Legacy - kept for backwards compatibility)
 CREATE TABLE IF NOT EXISTS tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   household_id UUID REFERENCES households(id) ON DELETE CASCADE,
@@ -114,6 +131,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 ALTER TABLE households ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE action_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE meals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE calendar_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cognitive_load ENABLE ROW LEVEL SECURITY;
@@ -130,6 +148,18 @@ CREATE POLICY "Users can view their household profiles" ON profiles
 
 CREATE POLICY "Users can view their household tasks" ON tasks
   FOR SELECT USING (household_id IN (SELECT household_id FROM profiles WHERE user_id = auth.uid()));
+
+CREATE POLICY "Users can view their household action_items" ON action_items
+  FOR SELECT USING (household_id IN (SELECT household_id FROM profiles WHERE user_id = auth.uid()));
+
+CREATE POLICY "Users can insert their household action_items" ON action_items
+  FOR INSERT WITH CHECK (household_id IN (SELECT household_id FROM profiles WHERE user_id = auth.uid()));
+
+CREATE POLICY "Users can update their household action_items" ON action_items
+  FOR UPDATE USING (household_id IN (SELECT household_id FROM profiles WHERE user_id = auth.uid()));
+
+CREATE POLICY "Users can delete their household action_items" ON action_items
+  FOR DELETE USING (household_id IN (SELECT household_id FROM profiles WHERE user_id = auth.uid()));
 
 CREATE POLICY "Users can view their household meals" ON meals
   FOR SELECT USING (household_id IN (SELECT household_id FROM profiles WHERE user_id = auth.uid()));

@@ -158,9 +158,45 @@ export default function HierarchicalTasks({ householdId }) {
     };
 
     fetchHierarchicalData();
-    // Refresh every 5 minutes
+
+    // Set up real-time subscription for instant updates
+    const channel = supabase
+      .channel(`hierarchical-tasks-${householdId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'action_items',
+          filter: `household_id=eq.${householdId}`
+        },
+        () => {
+          // Re-fetch on any change
+          fetchHierarchicalData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'calendar_events',
+          filter: `household_id=eq.${householdId}`
+        },
+        () => {
+          // Re-fetch on any change
+          fetchHierarchicalData();
+        }
+      )
+      .subscribe();
+
+    // Refresh every 5 minutes as backup
     const interval = setInterval(fetchHierarchicalData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [householdId]);
 
   const toggleExpand = (itemId) => {
@@ -240,8 +276,18 @@ export default function HierarchicalTasks({ householdId }) {
 
   if (masterItems.length === 0) {
     return (
-      <div className="p-6 text-center text-slate-500">
-        No master items found. Create events or tasks to see them here.
+      <div className="p-6 text-center">
+        <div className="text-slate-400 mb-4">Welcome to your Master Schedule</div>
+        <p className="text-sm text-slate-500 mb-6">No events or tasks yet. Start by adding your first master item.</p>
+        <button
+          onClick={() => {
+            // Trigger add task modal or navigate to add event
+            window.dispatchEvent(new CustomEvent('openAddTaskModal'));
+          }}
+          className="px-6 py-3 bg-teal-500/20 border border-teal-500/40 text-teal-400 rounded-xl active:bg-teal-500/30 transition-all font-medium"
+        >
+          + Add Master Item
+        </button>
       </div>
     );
   }

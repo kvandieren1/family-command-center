@@ -112,158 +112,121 @@ function DateNightMeter({ householdId }) {
   );
 }
 
-// Mental Load Radial Gauge Component
+// Mental Load Radial Gauge Component - Separate Pilot/Co-Pilot Meters
 function MentalLoadMeter({ householdId }) {
-  const [load, setLoad] = useState(0);
-  const [color, setColor] = useState('emerald');
+  const [pilotLoad, setPilotLoad] = useState(0);
+  const [coPilotLoad, setCoPilotLoad] = useState(0);
+  const [totalLoad, setTotalLoad] = useState(0);
 
   useEffect(() => {
     if (!householdId) return;
 
     const calculateMentalLoad = async () => {
       try {
-        // Fetch all active action_items (tasks) - pending or in_progress
-        const { data: actionItemsData, error: actionItemsError } = await supabase
-          .from('action_items')
-          .select('burden_score, status, assigned_to')
-          .eq('household_id', householdId)
-          .in('status', ['pending', 'in_progress']);
-
-        // Ensure actionItems is always an array (fallback to empty array on error or undefined)
-        let actionItems = [];
-        if (actionItemsError) {
-          console.error('Error fetching action_items for mental load:', actionItemsError);
-        } else if (Array.isArray(actionItemsData)) {
-          actionItems = actionItemsData;
-        }
-
-        // Fetch master items from households table (if they have burden_score)
-        // Note: Assuming households table has been extended with burden_score and assigned_to
-        // If not, we'll also check calendar_events for master events
-        let householdsBurden = 0;
-        try {
-          const { data: householdData, error: householdError } = await supabase
-            .from('households')
-            .select('burden_score, assigned_to')
-            .eq('id', householdId)
-            .single();
-
-          if (!householdError && householdData?.burden_score) {
-            householdsBurden = householdData.burden_score || 0;
-          }
-        } catch (err) {
-          // If households table doesn't have burden_score, try calendar_events
-          const { data: eventsData, error: eventsError } = await supabase
-            .from('calendar_events')
-            .select('burden_score, assigned_to')
-            .eq('household_id', householdId);
-
-          if (!eventsError && eventsData) {
-            householdsBurden = (eventsData || []).reduce((sum, event) => {
-              return sum + (event.burden_score || 0);
-            }, 0);
-          }
-        }
-
-        // Sum burden_scores from action_items
-        // burden_score is numeric: 1=Low, 2=Medium, 3=High
-        // Example: Leia's Birthday (3) + Goody Bags (2) + Chocolate (1) = 6 total
-        const actionItemsBurden = actionItems.reduce((sum, item) => {
-          return sum + (item.burden_score || 0);
-        }, 0);
-
-        // Calculate total burden (sum of households/master events + action_items)
-        const totalBurden = householdsBurden + actionItemsBurden;
+        // Use recursive cognitive load calculator
+        const { calculateTotalMentalLoad } = await import('../lib/cognitiveLoad');
+        const result = await calculateTotalMentalLoad(householdId);
         
-        // Multiply by 10 to keep the meter impactful (since max is now 3 instead of 10)
-        const calculatedLoad = totalBurden * 10;
-        setLoad(calculatedLoad);
+        // Multiply by 10 for impact (since max burden_score is 3)
+        const pilotCalculated = result.pilot * 10;
+        const coPilotCalculated = result.coPilot * 10;
+        const totalCalculated = result.total * 10;
 
-        // Set color based on load
-        if (calculatedLoad < 30) {
-          setColor('emerald');
-        } else if (calculatedLoad <= 70) {
-          setColor('amber');
-        } else {
-          setColor('red');
-        }
+        setPilotLoad(pilotCalculated);
+        setCoPilotLoad(coPilotCalculated);
+        setTotalLoad(totalCalculated);
       } catch (err) {
         console.error('Error calculating mental load:', err);
       }
     };
 
     calculateMentalLoad();
-    // Refresh every 5 minutes
+    
+    // Set up real-time subscription for action_items changes
+    const channel = supabase
+      .channel(`mental-load-${householdId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'action_items',
+          filter: `household_id=eq.${householdId}`
+        },
+        () => {
+          // Recalculate on any change
+          calculateMentalLoad();
+        }
+      )
+      .subscribe();
+
+    // Refresh every 5 minutes as backup
     const interval = setInterval(calculateMentalLoad, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [householdId]);
 
-  const percentage = Math.min((load / 100) * 100, 100);
-  const circumference = 2 * Math.PI * 36; // radius = 36
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-  const colorClasses = {
-    emerald: {
-      text: 'text-emerald-400',
-      stroke: 'stroke-emerald-400',
-      glow: 'shadow-[0_0_20px_rgba(16,185,129,0.2)]',
-      bg: 'from-emerald-500/5'
-    },
-    amber: {
-      text: 'text-amber-400',
-      stroke: 'stroke-amber-400',
-      glow: 'shadow-[0_0_20px_rgba(245,158,11,0.2)]',
-      bg: 'from-amber-500/5'
-    },
-    red: {
-      text: 'text-red-400',
-      stroke: 'stroke-red-400',
-      glow: 'shadow-[0_0_20px_rgba(239,68,68,0.2)]',
-      bg: 'from-red-500/5'
-    }
+  const getColorForLoad = (loadValue) => {
+    if (loadValue < 30) return { text: 'text-emerald-400', stroke: 'stroke-emerald-400', glow: 'shadow-[0_0_15px_rgba(16,185,129,0.2)]', bg: 'from-emerald-500/5' };
+    if (loadValue <= 70) return { text: 'text-amber-400', stroke: 'stroke-amber-400', glow: 'shadow-[0_0_15px_rgba(245,158,11,0.2)]', bg: 'from-amber-500/5' };
+    return { text: 'text-red-400', stroke: 'stroke-red-400', glow: 'shadow-[0_0_15px_rgba(239,68,68,0.2)]', bg: 'from-red-500/5' };
   };
 
-  const currentColor = colorClasses[color];
+  const pilotColor = getColorForLoad(pilotLoad);
+  const coPilotColor = getColorForLoad(coPilotLoad);
+  const totalColor = getColorForLoad(totalLoad);
 
-  return (
-    <div className={`relative p-4 bg-slate-900/40 backdrop-blur-md border border-slate-700/30 rounded-xl ${currentColor.glow}`}>
-      <div className="flex flex-col items-center gap-2">
-        <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Mental Load</div>
-        <div className="relative w-20 h-20">
-          <svg className="transform -rotate-90 w-20 h-20" viewBox="0 0 100 100">
-            {/* Background circle */}
-            <circle
-              cx="50"
-              cy="50"
-              r="36"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="8"
-              className="text-slate-800/30"
-            />
-            {/* Progress circle */}
-            <circle
-              cx="50"
-              cy="50"
-              r="36"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="8"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              className={currentColor.stroke}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className={`text-xl font-bold ${currentColor.text}`}>{load}</span>
+  const renderRadialGauge = (load, color, label, size = 16) => {
+    const percentage = Math.min((load / 100) * 100, 100);
+    const circumference = 2 * Math.PI * (size * 2.25); // radius based on size
+    const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+    return (
+      <div className={`relative p-2 bg-slate-900/40 backdrop-blur-md border border-slate-700/30 rounded-lg ${color.glow}`}>
+        <div className="flex flex-col items-center gap-1">
+          <div className="text-[8px] uppercase tracking-wider text-slate-400 font-semibold">{label}</div>
+          <div className="relative" style={{ width: `${size * 4}px`, height: `${size * 4}px` }}>
+            <svg className="transform -rotate-90" style={{ width: `${size * 4}px`, height: `${size * 4}px` }} viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="36" fill="none" stroke="currentColor" strokeWidth="8" className="text-slate-800/30" />
+              <circle
+                cx="50"
+                cy="50"
+                r="36"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                className={color.stroke}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className={`text-sm font-bold ${color.text}`}>{load}</span>
+            </div>
           </div>
         </div>
-        <div className={`text-xs font-medium ${currentColor.text}`}>
-          {color === 'emerald' ? 'Low' : color === 'amber' ? 'Moderate' : 'High'}
-        </div>
+        <div className={`absolute inset-0 bg-gradient-to-br ${color.bg} to-transparent rounded-lg pointer-events-none`}></div>
       </div>
-      <div className={`absolute inset-0 bg-gradient-to-br ${currentColor.bg} to-transparent rounded-xl pointer-events-none`}></div>
+    );
+  };
+
+  return (
+    <div className="relative p-3 bg-slate-900/40 backdrop-blur-md border border-slate-700/30 rounded-xl">
+      <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-2 text-center">Mental Load</div>
+      <div className="flex items-center justify-center gap-2">
+        {renderRadialGauge(pilotLoad, pilotColor, 'Pilot', 14)}
+        {renderRadialGauge(coPilotLoad, coPilotColor, 'Co-Pilot', 14)}
+      </div>
+      <div className="mt-2 text-center">
+        <span className={`text-xs font-medium ${totalColor.text}`}>
+          Total: {totalLoad}
+        </span>
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/5 to-transparent rounded-xl pointer-events-none"></div>
     </div>
   );
 }
@@ -273,7 +236,7 @@ export default function HeaderMeters({ householdId }) {
   return (
     <div className="bg-slate-900/80 border-b border-slate-800/50 px-4 py-3">
       <div className="max-w-[1800px] mx-auto">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <VacationMeter 
             daysUntilVacation={null} 
             vacationName="" 

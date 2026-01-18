@@ -485,6 +485,15 @@ export default function SetupWizard({ onComplete, isLoggedIn, onGoogleLoginCompl
                         <button
                           type="button"
                           onClick={async () => {
+                            // PRODUCTION: Validate Google Calendar environment variables
+                            const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+                            const apiKey = import.meta.env.VITE_GOOGLE_CALENDAR_API_KEY || import.meta.env.VITE_GOOGLE_API_KEY;
+                            
+                            if (!clientId || !apiKey) {
+                              alert('Google Calendar is not configured. Please set VITE_GOOGLE_CLIENT_ID and VITE_GOOGLE_CALENDAR_API_KEY in your environment variables.');
+                              return;
+                            }
+
                             const result = await signInWithGoogle();
                             if (result.success && result.redirectUrl) {
                               window.location.href = result.redirectUrl;
